@@ -239,7 +239,35 @@ function animate() {
     requestAnimationFrame(animate);
 
     const isUp = keys.w || keys.ArrowUp;
-...
+    const isDown = keys.s || keys.ArrowDown;
+    const isLeft = keys.a || keys.ArrowLeft;
+    const isRight = keys.d || keys.ArrowRight;
+
+    if (isUp) velocity += stats.acceleration;
+    else if (isDown) velocity -= stats.acceleration;
+    else {
+        if (velocity > 0) velocity = Math.max(0, velocity - stats.deceleration);
+        if (velocity < 0) velocity = Math.min(0, velocity + stats.deceleration);
+    }
+
+    velocity = Math.max(-stats.maxSpeed / 2, Math.min(stats.maxSpeed, velocity));
+
+    if (Math.abs(velocity) > 0.01) {
+        const turnDir = velocity > 0 ? 1 : -1;
+        if (isLeft) rotation += stats.turnSpeed * turnDir;
+        if (isRight) rotation -= stats.turnSpeed * turnDir;
+    }
+
+    carGroup.rotation.y = rotation;
+    carGroup.position.x += Math.sin(rotation) * velocity;
+    carGroup.position.z += Math.cos(rotation) * velocity;
+
+    const cameraOffset = new THREE.Vector3(0, 5, -10);
+    cameraOffset.applyQuaternion(carGroup.quaternion);
+    const targetCameraPos = carGroup.position.clone().add(cameraOffset);
+    camera.position.lerp(targetCameraPos, 0.1);
+    camera.lookAt(carGroup.position);
+
     speedMeter.textContent = `${Math.round(Math.abs(velocity) * 200)} km/h`;
     
     updateEngineSound();
