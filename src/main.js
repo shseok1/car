@@ -127,45 +127,37 @@ for (let i = 0; i < 200; i++) {
     createTree(x, z);
 }
 
-// --- Car (Ferrari SF90 Stradale) ---
+// --- Car ---
 const carGroup = new THREE.Group();
 
-// Load GLTF Model (race-future.glb)
+// Load Model
 const loader = new THREE.GLTFLoader();
-
 loader.load(
     'race-future.glb',
     function (gltf) {
-        const kart = gltf.scene;
-        
-        // Scale and rotation adjustment for the kart
-        kart.scale.set(1, 1, 1); // User might need to tweak this scale
-        kart.rotation.y = Math.PI; // Face the correct forward direction initially
-        kart.position.y = 0.2; // slightly elevate if wheels clip into the ground
-        
-        // Enable shadows for the loaded model
-        kart.traverse(function(child) {
+        const model = gltf.scene;
+        model.scale.set(1, 1, 1);
+        model.rotation.y = Math.PI;
+        model.position.y = 0.2;
+        model.traverse(child => {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
             }
         });
-
-        carGroup.add(kart);
+        carGroup.add(model);
     },
-    undefined, // progress callback
-    function (error) {
-        console.error('An error happened loading the GLTF', error);
-    }
+    undefined,
+    error => console.error(error)
 );
 
-carGroup.position.set(-200, 0, 280); // Start position at Spa layout Start/Finish
+carGroup.position.set(-200, 0, 280); 
 scene.add(carGroup);
 
 // --- Game Logic ---
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
 let velocity = 0;
-let rotation = Math.atan2(-80, 70); // Face from Start/Finish towards T1
+let rotation = Math.atan2(-80, 70); 
 const stats = {
     acceleration: 0.012,
     deceleration: 0.005,
@@ -188,9 +180,9 @@ const revBar = document.getElementById('rev-bar');
 // --- Gearbox System ---
 const gearbox = {
     currentGear: 1,
-    maxGears: 8, // 8-speed DCT
+    maxGears: 8, 
     rpm: 0,
-    ratios: [0, 0.12, 0.25, 0.38, 0.52, 0.65, 0.78, 0.9, 1.0], // Gear speed limits
+    ratios: [0, 0.12, 0.25, 0.38, 0.52, 0.65, 0.78, 0.9, 1.0], 
     shiftCooldown: 0,
 };
 
@@ -201,19 +193,16 @@ function updateGearbox() {
     const gearMin = gearbox.ratios[gearbox.currentGear - 1];
     const gearMax = gearbox.ratios[gearbox.currentGear];
     
-    // Calculate RPM within current gear
     gearbox.rpm = (speedRatio - gearMin) / (gearMax - gearMin || 0.1);
-    gearbox.rpm = Math.max(0, Math.min(1.2, gearbox.rpm)); // Allow slight over-rev
+    gearbox.rpm = Math.max(0, Math.min(1.2, gearbox.rpm)); 
     
     if (gearbox.shiftCooldown > 0) {
         gearbox.shiftCooldown--;
     } else {
-        // Upshift logic
         if (gearbox.rpm > 0.9 && gearbox.currentGear < gearbox.maxGears) {
             gearbox.currentGear++;
-            gearbox.shiftCooldown = 30; // 0.5s cooldown at 60fps
+            gearbox.shiftCooldown = 30; 
         }
-        // Downshift logic
         else if (gearbox.rpm < 0.25 && gearbox.currentGear > 1) {
             gearbox.currentGear--;
             gearbox.shiftCooldown = 30;
@@ -224,7 +213,7 @@ function updateGearbox() {
     revBar.style.width = `${Math.min(100, gearbox.rpm * 100)}%`;
 }
 
-// --- Audio System (V8 Engine Sound Synthesis) ---
+// --- Audio System ---
 let audioCtx;
 let oscillator;
 let gainNode;
@@ -232,28 +221,22 @@ let engineStarted = false;
 
 function initAudio() {
     if (engineStarted) return;
-    
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     oscillator = audioCtx.createOscillator();
     gainNode = audioCtx.createGain();
-
     oscillator.type = 'sawtooth';
     oscillator.frequency.setValueAtTime(40, audioCtx.currentTime);
-    
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(600, audioCtx.currentTime);
-
     oscillator.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-
     oscillator.start();
     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
     engineStarted = true;
 }
 
-// UI for Audio Start
 const startButton = document.createElement('button');
 startButton.textContent = '엔진 시동 걸기 (V8 Sound)';
 startButton.style.position = 'absolute';
@@ -273,18 +256,14 @@ startButton.addEventListener('click', () => {
 
 function updateEngineSound() {
     if (!engineStarted) return;
-
-    // Pitch depends on RPM + Gear base frequency
     const freq = 40 + (gearbox.rpm * 200) + (gearbox.currentGear * 8);
     oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
-
     const volume = 0.05 + (Math.abs(velocity) * 0.2);
     gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
 }
 
 function animate() {
     requestAnimationFrame(animate);
-
     const isUp = keys.w || keys.ArrowUp;
     const isDown = keys.s || keys.ArrowDown;
     const isLeft = keys.a || keys.ArrowLeft;
@@ -316,11 +295,8 @@ function animate() {
     camera.lookAt(carGroup.position);
 
     speedMeter.textContent = `${Math.round(Math.abs(velocity) * 200)} km/h`;
-    
     updateGearbox();
     updateEngineSound();
-    
     renderer.render(scene, camera);
 }
-animate();
 animate();
