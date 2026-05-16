@@ -104,6 +104,7 @@ scene.add(carGroup);
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
 let velocity = 0;
 let rotation = 0; // Face forward along Z axis
+let viewMode = 0; // 0: 3rd person, 1: 1st person
 const stats = {
     acceleration: 0.012,
     deceleration: 0.005,
@@ -111,7 +112,10 @@ const stats = {
     turnSpeed: 0.04
 };
 
-window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
+window.addEventListener('keydown', (e) => { 
+    if (keys.hasOwnProperty(e.key)) keys[e.key] = true; 
+    if (e.key.toLowerCase() === 'c') viewMode = (viewMode + 1) % 2; // Toggle view
+});
 window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -234,11 +238,28 @@ function animate() {
     carGroup.position.x += Math.sin(rotation) * velocity;
     carGroup.position.z += Math.cos(rotation) * velocity;
 
-    const cameraOffset = new THREE.Vector3(0, 10, -20); // Adjusted for larger car
+    // Camera follow logic based on viewMode
+    let cameraOffset;
+    if (viewMode === 0) {
+        // 3rd Person (Chase)
+        cameraOffset = new THREE.Vector3(0, 10, -20);
+    } else {
+        // 1st Person (Cockpit)
+        cameraOffset = new THREE.Vector3(0, 2.5, 0.5); // Inside the car
+    }
+    
     cameraOffset.applyQuaternion(carGroup.quaternion);
     const targetCameraPos = carGroup.position.clone().add(cameraOffset);
-    camera.position.lerp(targetCameraPos, 0.1);
-    camera.lookAt(carGroup.position);
+    
+    if (viewMode === 0) {
+        camera.position.lerp(targetCameraPos, 0.1);
+        camera.lookAt(carGroup.position);
+    } else {
+        camera.position.copy(targetCameraPos);
+        // Look forward in 1st person
+        const lookOffset = new THREE.Vector3(0, 1.5, 10).applyQuaternion(carGroup.quaternion);
+        camera.lookAt(carGroup.position.clone().add(lookOffset));
+    }
 
     speedMeter.textContent = `${Math.round(Math.abs(velocity) * 200)} km/h`;
     updateGearbox();
