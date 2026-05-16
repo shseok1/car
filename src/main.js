@@ -97,97 +97,34 @@ for (let i = 0; i < 20; i++) {
 // --- Car (Ferrari SF90 Stradale) ---
 const carGroup = new THREE.Group();
 
-// Main Body (lower profile, sleek)
-const bodyGeo = new THREE.BoxGeometry(1.97, 0.5, 4.71);
-const bodyMat = new THREE.MeshPhongMaterial({ color: 0xcc0000, shininess: 100 }); // Ferrari Red
-const body = new THREE.Mesh(bodyGeo, bodyMat);
-body.position.y = 0.45;
-body.castShadow = true;
-carGroup.add(body);
+// Load GLTF Model (kart-oobi.glb)
+const loader = new THREE.GLTFLoader();
 
-// Cabin (glasshouse)
-const cabinGeo = new THREE.BoxGeometry(1.4, 0.45, 2.0);
-const cabinMat = new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 150 });
-const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-cabin.position.set(0, 0.9, 0.1); 
-cabin.castShadow = true;
-carGroup.add(cabin);
+loader.load(
+    'kart-oobi.glb',
+    function (gltf) {
+        const kart = gltf.scene;
+        
+        // Scale and rotation adjustment for the kart
+        kart.scale.set(1, 1, 1); // User might need to tweak this scale
+        kart.rotation.y = Math.PI; // Face the correct forward direction initially
+        kart.position.y = 0.2; // slightly elevate if wheels clip into the ground
+        
+        // Enable shadows for the loaded model
+        kart.traverse(function(child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
 
-// Front aero/nose (sloped)
-const noseGeo = new THREE.CylinderGeometry(0, 0.5, 1.97, 3, 1, false, 0, Math.PI);
-const noseMat = new THREE.MeshPhongMaterial({ color: 0xcc0000, shininess: 100 });
-const nose = new THREE.Mesh(noseGeo, noseMat);
-nose.rotation.z = Math.PI / 2;
-nose.rotation.x = Math.PI / 2;
-nose.scale.set(1, 0.6, 1);
-nose.position.set(0, 0.45, 2.355); 
-nose.castShadow = true;
-carGroup.add(nose);
-
-// Rear spoiler/diffuser area
-const spoilerGeo = new THREE.BoxGeometry(1.8, 0.05, 0.4);
-const spoilerMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
-const spoiler = new THREE.Mesh(spoilerGeo, spoilerMat);
-spoiler.position.set(0, 0.8, -2.1);
-spoiler.castShadow = true;
-carGroup.add(spoiler);
-
-const spoilerPillarGeo = new THREE.BoxGeometry(0.1, 0.2, 0.2);
-const leftPillar = new THREE.Mesh(spoilerPillarGeo, spoilerMat);
-leftPillar.position.set(-0.6, 0.7, -2.1);
-carGroup.add(leftPillar);
-const rightPillar = new THREE.Mesh(spoilerPillarGeo, spoilerMat);
-rightPillar.position.set(0.6, 0.7, -2.1);
-carGroup.add(rightPillar);
-
-// Wheels (wider, larger, SF90 style)
-const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.5, 24);
-const wheelMat = new THREE.MeshPhongMaterial({ color: 0x111111 });
-const rimGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.52, 8); // Simple 8-spoke look
-const rimMat = new THREE.MeshPhongMaterial({ color: 0xdddddd, shininess: 100 });
-
-const wheelZ = 1.4; // Front/rear wheelbase distance
-const wheelX = 0.95; // Half width placement
-const wheelPositions = [
-    [-wheelX, 0.35, wheelZ], [wheelX, 0.35, wheelZ],
-    [-wheelX, 0.35, -wheelZ], [wheelX, 0.35, -wheelZ]
-];
-
-wheelPositions.forEach(pos => {
-    const wheelGroup = new THREE.Group();
-    const tire = new THREE.Mesh(wheelGeo, wheelMat);
-    tire.rotation.z = Math.PI / 2;
-    tire.castShadow = true;
-    wheelGroup.add(tire);
-    
-    const rim = new THREE.Mesh(rimGeo, rimMat);
-    rim.rotation.z = Math.PI / 2;
-    wheelGroup.add(rim);
-    
-    wheelGroup.position.set(...pos);
-    carGroup.add(wheelGroup);
-});
-
-// Name Plate ('수현')
-const canvas = document.createElement('canvas');
-canvas.width = 256;
-canvas.height = 128;
-const context = canvas.getContext('2d');
-context.fillStyle = '#cc0000';
-context.fillRect(0, 0, 256, 128);
-context.fillStyle = '#ffffff';
-context.font = 'Bold 80px Arial';
-context.textAlign = 'center';
-context.textBaseline = 'middle';
-context.fillText('수현', 128, 64);
-
-const nameTexture = new THREE.CanvasTexture(canvas);
-const nameGeo = new THREE.PlaneGeometry(0.8, 0.4);
-const nameMat = new THREE.MeshBasicMaterial({ map: nameTexture });
-const namePlate = new THREE.Mesh(nameGeo, nameMat);
-namePlate.position.set(0, 0.5, -2.36); // Position at the very back
-namePlate.rotation.y = Math.PI; // Face outwards
-carGroup.add(namePlate);
+        carGroup.add(kart);
+    },
+    undefined, // progress callback
+    function (error) {
+        console.error('An error happened loading the GLTF', error);
+    }
+);
 
 carGroup.position.set(0, 0, 45); // Start position
 scene.add(carGroup);
