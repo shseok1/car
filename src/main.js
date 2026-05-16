@@ -37,49 +37,9 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// --- Track (Simple Square) ---
-const trackPoints = [
-    new THREE.Vector2(-100, -100),
-    new THREE.Vector2(-100, 100),
-    new THREE.Vector2(100, 100),
-    new THREE.Vector2(100, -100),
-];
-
-const curve = new THREE.SplineCurve(trackPoints);
-const points = curve.getPoints(200);
-
-const trackWidth = 20;
-const outerPoints = [];
-const innerPoints = [];
-
-for (let i = 0; i < points.length; i++) {
-    const p1 = points[i];
-    const p2 = points[(i + 1) % points.length];
-    
-    let dx = p2.x - p1.x;
-    let dy = p2.y - p1.y;
-    const len = Math.sqrt(dx*dx + dy*dy);
-    if(len === 0) continue;
-    dx /= len; dy /= len;
-    
-    const nx = -dy;
-    const ny = dx;
-    
-    outerPoints.push(new THREE.Vector2(p1.x + nx * trackWidth / 2, p1.y + ny * trackWidth / 2));
-    innerPoints.push(new THREE.Vector2(p1.x - nx * trackWidth / 2, p1.y - ny * trackWidth / 2));
-}
-
-const trackShape = new THREE.Shape(outerPoints);
-const holePath = new THREE.Path();
-for (let i = innerPoints.length - 1; i >= 0; i--) {
-    if (i === innerPoints.length - 1) holePath.moveTo(innerPoints[i].x, innerPoints[i].y);
-    else holePath.lineTo(innerPoints[i].x, innerPoints[i].y);
-}
-trackShape.holes.push(holePath);
-
-const extrudeSettings = { depth: 0.2, bevelEnabled: false, curveSegments: 12 };
-const trackGeo = new THREE.ExtrudeGeometry(trackShape, extrudeSettings);
-const trackMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+// --- Track (Original Circular Layout) ---
+const trackGeo = new THREE.RingGeometry(40, 60, 64);
+const trackMat = new THREE.MeshPhongMaterial({ color: 0x333333, side: THREE.DoubleSide });
 const track = new THREE.Mesh(trackGeo, trackMat);
 track.rotation.x = -Math.PI / 2;
 track.position.y = 0.05;
@@ -106,10 +66,10 @@ function createTree(x, z) {
     scene.add(tree);
 }
 
-for (let i = 0; i < 100; i++) {
-    const x = (Math.random() - 0.5) * 1000;
-    const z = (Math.random() - 0.5) * 1000;
-    createTree(x, z);
+for (let i = 0; i < 50; i++) {
+    const angle = (i / 50) * Math.PI * 2;
+    createTree(Math.cos(angle) * 70, Math.sin(angle) * 70);
+    createTree(Math.cos(angle) * 30, Math.sin(angle) * 30);
 }
 
 // --- Car ---
@@ -136,19 +96,13 @@ loader.load(
     error => console.error(error)
 );
 
-carGroup.position.set(-100, 0, 0); 
+carGroup.position.set(0, 0, 50); // Start on the original track position
 scene.add(carGroup);
 
 // --- Game Logic ---
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
 let velocity = 0;
-let rotation = Math.PI; 
-const stats = {
-    acceleration: 0.012,
-    deceleration: 0.005,
-    maxSpeed: 1.0, // 200 km/h
-    turnSpeed: 0.04
-};
+let rotation = 0; // Face forward along Z axis
 
 window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
 window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
