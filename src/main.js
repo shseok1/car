@@ -157,10 +157,10 @@ const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: f
 let velocity = 0;
 let rotation = 0;
 const stats = {
-    acceleration: 0.01,
-    deceleration: 0.005,
-    maxSpeed: 1.0,
-    turnSpeed: 0.04
+    acceleration: 0.008,
+    deceleration: 0.003,
+    maxSpeed: 1.5, // 300 km/h (1.5 * 200)
+    turnSpeed: 0.035
 };
 
 window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
@@ -180,32 +180,38 @@ const gearbox = {
     currentGear: 1,
     maxGears: 6,
     rpm: 0,
-    ratios: [0, 0.2, 0.4, 0.6, 0.8, 0.95, 1.0], // Max speed ratio per gear
+    ratios: [0, 0.15, 0.3, 0.5, 0.7, 0.9, 1.0], // Gear speed limits
+    shiftCooldown: 0,
 };
 
 function updateGearbox() {
     const absVelocity = Math.abs(velocity);
     const speedRatio = absVelocity / stats.maxSpeed;
     
-    // Simple Automatic Shifting Logic
-    let gear = 1;
-    for (let i = 1; i < gearbox.maxGears; i++) {
-        if (speedRatio > gearbox.ratios[i]) {
-            gear = i + 1;
+    const gearMin = gearbox.ratios[gearbox.currentGear - 1];
+    const gearMax = gearbox.ratios[gearbox.currentGear];
+    
+    // Calculate RPM within current gear
+    gearbox.rpm = (speedRatio - gearMin) / (gearMax - gearMin || 0.1);
+    gearbox.rpm = Math.max(0, Math.min(1.2, gearbox.rpm)); // Allow slight over-rev
+    
+    if (gearbox.shiftCooldown > 0) {
+        gearbox.shiftCooldown--;
+    } else {
+        // Upshift logic
+        if (gearbox.rpm > 0.9 && gearbox.currentGear < gearbox.maxGears) {
+            gearbox.currentGear++;
+            gearbox.shiftCooldown = 30; // 0.5s cooldown at 60fps
+        }
+        // Downshift logic
+        else if (gearbox.rpm < 0.25 && gearbox.currentGear > 1) {
+            gearbox.currentGear--;
+            gearbox.shiftCooldown = 30;
         }
     }
     
-    // Calculate RPM for sound and UI (simulated)
-    const gearMin = gearbox.ratios[gear - 1];
-    const gearMax = gearbox.ratios[gear];
-    gearbox.rpm = (speedRatio - gearMin) / (gearMax - gearMin || 1);
-    
-    if (gear !== gearbox.currentGear) {
-        gearbox.currentGear = gear;
-        gearDisplay.textContent = `GEAR: ${gear}`;
-    }
-    
-    revBar.style.width = `${gearbox.rpm * 100}%`;
+    gearDisplay.textContent = `GEAR: ${gearbox.currentGear}`;
+    revBar.style.width = `${Math.min(100, gearbox.rpm * 100)}%`;
 }
 
 // --- Audio System (V8 Engine Sound Synthesis) ---
@@ -221,13 +227,12 @@ function initAudio() {
     oscillator = audioCtx.createOscillator();
     gainNode = audioCtx.createGain();
 
-    oscillator.type = 'sawtooth'; // Rough sound for V8
-    oscillator.frequency.setValueAtTime(40, audioCtx.currentTime); // Base idle freq
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(40, audioCtx.currentTime);
     
-    // Low pass filter for more "rumble"
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, audioCtx.currentTime);
+    filter.frequency.setValueAtTime(600, audioCtx.currentTime);
 
     oscillator.connect(filter);
     filter.connect(gainNode);
@@ -259,11 +264,10 @@ startButton.addEventListener('click', () => {
 function updateEngineSound() {
     if (!engineStarted) return;
 
-    // Pitch depends on RPM within the gear
-    const freq = 40 + (gearbox.rpm * 150) + (gearbox.currentGear * 10);
+    // Pitch depends on RPM + Gear base frequency
+    const freq = 30 + (gearbox.rpm * 180) + (gearbox.currentGear * 5);
     oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
 
-    // Volume depends on velocity
     const volume = 0.05 + (Math.abs(velocity) * 0.2);
     gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
 }
@@ -283,12 +287,12 @@ function animate() {
         if (velocity < 0) velocity = Math.min(0, velocity + stats.deceleration);
     }
 
-    velocity = Math.max(-stats.maxSpeed / 2, Math.min(stats.maxSpeed, velocity));
+    velocity = Math.max(-stats.maxSpeed / 3, Math.min(stats.maxSpeed, velocity));
 
     if (Math.abs(velocity) > 0.01) {
-        const turnDir = velocity > 0 ? 1 : -1;
-        if (isLeft) rotation += stats.turnSpeed * turnDir;
-        if (isRight) rotation -= stats.turnSpeed * turnDir;
+        const turnDir = (velocity > 0 ? 1 : -1) * (0.5 + Math.abs(velocity) / stats.maxSpeed);
+        if (isLeft) rotation += stats.turnSpeed * turnDir * 0.8;
+        if (isRight) rotation -= stats.turnSpeed * turnDir * 0.8;
     }
 
     carGroup.rotation.y = rotation;
@@ -308,4 +312,5 @@ function animate() {
     
     renderer.render(scene, camera);
 }
+animate();
 animate();
