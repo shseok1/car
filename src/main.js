@@ -136,7 +136,7 @@ let rotation = 0;
 const stats = {
     acceleration: 0.012,
     deceleration: 0.005,
-    maxSpeed: 1.5, // 300 km/h
+    maxSpeed: 1.0, // 200 km/h
     turnSpeed: 0.04
 };
 
