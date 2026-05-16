@@ -7,18 +7,13 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.outputEncoding = THREE.sRGBEncoding; // Crucial for correct GLTF color rendering
 document.body.appendChild(renderer.domElement);
 
 // --- Lighting ---
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Boosted ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0); // Natural sky/ground lighting
-hemiLight.position.set(0, 200, 0);
-scene.add(hemiLight);
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 2.5); // Boosted sun light
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
 dirLight.position.set(100, 100, 50);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 2048;
