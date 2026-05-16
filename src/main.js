@@ -41,7 +41,7 @@ track.position.y = 0.05;
 track.receiveShadow = true;
 scene.add(track);
 
-// --- Decoration (Trees) ---
+// --- Decoration (Trees & Stadium) ---
 function createTree(x, z) {
     const tree = new THREE.Group();
     const trunkGeo = new THREE.CylinderGeometry(0.2, 0.2, 1);
@@ -61,9 +61,65 @@ function createTree(x, z) {
     scene.add(tree);
 }
 
-for (let i = 0; i < 50; i++) {
-    const angle = (i / 50) * Math.PI * 2;
-    createTree(Math.cos(angle) * 70, Math.sin(angle) * 70);
+function createGrandstand(x, z, rotation) {
+    const stand = new THREE.Group();
+    const stepCount = 5;
+    const stepWidth = 30;
+    const stepHeight = 0.8;
+    const stepDepth = 2;
+    
+    for (let i = 0; i < stepCount; i++) {
+        // Seat row
+        const stepGeo = new THREE.BoxGeometry(stepWidth, stepHeight, stepDepth);
+        const stepMat = new THREE.MeshPhongMaterial({ color: 0x444444 });
+        const step = new THREE.Mesh(stepGeo, stepMat);
+        step.position.set(0, (i + 1) * stepHeight, i * stepDepth);
+        step.castShadow = true;
+        step.receiveShadow = true;
+        stand.add(step);
+        
+        // Spectators
+        for (let j = 0; j < 15; j++) {
+            const personGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.7);
+            const personMat = new THREE.MeshPhongMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5) });
+            const person = new THREE.Mesh(personGeo, personMat);
+            person.position.set(-12 + j * 1.8, (i + 1) * stepHeight + 0.7, i * stepDepth);
+            stand.add(person);
+        }
+    }
+    
+    // Pillars & Roof
+    const roofGeo = new THREE.BoxGeometry(stepWidth + 2, 0.3, stepDepth * stepCount + 2);
+    const roofMat = new THREE.MeshPhongMaterial({ color: 0xeeeeee });
+    const roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.set(0, stepCount * stepHeight + 5, (stepCount * stepDepth) / 2 - 1);
+    stand.add(roof);
+
+    const pillarGeo = new THREE.CylinderGeometry(0.2, 0.2, 6);
+    const pillarMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
+    [-1, 1].forEach(side => {
+        const p = new THREE.Mesh(pillarGeo, pillarMat);
+        p.position.set(side * (stepWidth / 2), 3, -1);
+        stand.add(p);
+    });
+
+    stand.position.set(x, 0, z);
+    stand.rotation.y = rotation;
+    scene.add(stand);
+}
+
+// Place Stadium Parts
+createGrandstand(85, 0, -Math.PI / 2);
+createGrandstand(-85, 0, Math.PI / 2);
+createGrandstand(0, 85, Math.PI);
+createGrandstand(0, -85, 0);
+
+for (let i = 0; i < 60; i++) {
+    const angle = (i / 60) * Math.PI * 2;
+    // Avoid placing trees where grandstands are
+    if (Math.abs(angle % (Math.PI / 2)) > 0.2) {
+        createTree(Math.cos(angle) * 110, Math.sin(angle) * 110);
+    }
     createTree(Math.cos(angle) * 30, Math.sin(angle) * 30);
 }
 
