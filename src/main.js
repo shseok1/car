@@ -172,6 +172,41 @@ window.addEventListener('resize', () => {
 });
 
 const speedMeter = document.getElementById('speed-meter');
+const gearDisplay = document.getElementById('gear-display');
+const revBar = document.getElementById('rev-bar');
+
+// --- Gearbox System ---
+const gearbox = {
+    currentGear: 1,
+    maxGears: 6,
+    rpm: 0,
+    ratios: [0, 0.2, 0.4, 0.6, 0.8, 0.95, 1.0], // Max speed ratio per gear
+};
+
+function updateGearbox() {
+    const absVelocity = Math.abs(velocity);
+    const speedRatio = absVelocity / stats.maxSpeed;
+    
+    // Simple Automatic Shifting Logic
+    let gear = 1;
+    for (let i = 1; i < gearbox.maxGears; i++) {
+        if (speedRatio > gearbox.ratios[i]) {
+            gear = i + 1;
+        }
+    }
+    
+    // Calculate RPM for sound and UI (simulated)
+    const gearMin = gearbox.ratios[gear - 1];
+    const gearMax = gearbox.ratios[gear];
+    gearbox.rpm = (speedRatio - gearMin) / (gearMax - gearMin || 1);
+    
+    if (gear !== gearbox.currentGear) {
+        gearbox.currentGear = gear;
+        gearDisplay.textContent = `GEAR: ${gear}`;
+    }
+    
+    revBar.style.width = `${gearbox.rpm * 100}%`;
+}
 
 // --- Audio System (V8 Engine Sound Synthesis) ---
 let audioCtx;
@@ -192,7 +227,7 @@ function initAudio() {
     // Low pass filter for more "rumble"
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(200, audioCtx.currentTime);
+    filter.frequency.setValueAtTime(400, audioCtx.currentTime);
 
     oscillator.connect(filter);
     filter.connect(gainNode);
@@ -224,14 +259,12 @@ startButton.addEventListener('click', () => {
 function updateEngineSound() {
     if (!engineStarted) return;
 
-    const absVelocity = Math.abs(velocity);
-    
-    // Pitch modulation (40Hz idle to 150Hz max)
-    const freq = 40 + (absVelocity * 200);
+    // Pitch depends on RPM within the gear
+    const freq = 40 + (gearbox.rpm * 150) + (gearbox.currentGear * 10);
     oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
 
-    // Volume modulation
-    const volume = 0.05 + (absVelocity * 0.2);
+    // Volume depends on velocity
+    const volume = 0.05 + (Math.abs(velocity) * 0.2);
     gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
 }
 
@@ -270,6 +303,7 @@ function animate() {
 
     speedMeter.textContent = `${Math.round(Math.abs(velocity) * 200)} km/h`;
     
+    updateGearbox();
     updateEngineSound();
     
     renderer.render(scene, camera);

@@ -15,7 +15,31 @@ body {
 }
 
 #speed-meter {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: bold;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#gear-display {
+    font-size: 1.5rem;
+    color: #ffcc00;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+#rev-bar-container {
+    width: 200px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    margin-top: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#rev-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+    transition: width 0.1s;
 }
