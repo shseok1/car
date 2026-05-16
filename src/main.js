@@ -135,6 +135,7 @@ loader.load(
 );
 
 carGroup.position.set(0, 0, 50); // Start on the original track position
+carGroup.scale.set(2, 2, 2); // Double the size
 scene.add(carGroup);
 
 // --- Game Logic ---
@@ -271,7 +272,7 @@ function animate() {
     carGroup.position.x += Math.sin(rotation) * velocity;
     carGroup.position.z += Math.cos(rotation) * velocity;
 
-    const cameraOffset = new THREE.Vector3(0, 5, -10);
+    const cameraOffset = new THREE.Vector3(0, 10, -20); // Adjusted for larger car
     cameraOffset.applyQuaternion(carGroup.quaternion);
     const targetCameraPos = carGroup.position.clone().add(cameraOffset);
     camera.position.lerp(targetCameraPos, 0.1);
