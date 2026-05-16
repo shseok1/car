@@ -77,6 +77,8 @@ const carGroup = new THREE.Group();
 
 // Load Model
 const loader = new THREE.GLTFLoader();
+const redMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+
 loader.load(
     'race-future.glb',
     function (gltf) {
@@ -86,6 +88,7 @@ loader.load(
         model.position.y = 0.2;
         model.traverse(child => {
             if (child.isMesh) {
+                child.material = redMaterial; // Apply red color
                 child.castShadow = true;
                 child.receiveShadow = true;
             }
