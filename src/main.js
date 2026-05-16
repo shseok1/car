@@ -173,40 +173,77 @@ window.addEventListener('resize', () => {
 
 const speedMeter = document.getElementById('speed-meter');
 
+// --- Audio System (V8 Engine Sound Synthesis) ---
+let audioCtx;
+let oscillator;
+let gainNode;
+let engineStarted = false;
+
+function initAudio() {
+    if (engineStarted) return;
+    
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    oscillator = audioCtx.createOscillator();
+    gainNode = audioCtx.createGain();
+
+    oscillator.type = 'sawtooth'; // Rough sound for V8
+    oscillator.frequency.setValueAtTime(40, audioCtx.currentTime); // Base idle freq
+    
+    // Low pass filter for more "rumble"
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, audioCtx.currentTime);
+
+    oscillator.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    engineStarted = true;
+}
+
+// UI for Audio Start
+const startButton = document.createElement('button');
+startButton.textContent = '엔진 시동 걸기 (V8 Sound)';
+startButton.style.position = 'absolute';
+startButton.style.bottom = '20px';
+startButton.style.left = '50%';
+startButton.style.transform = 'translateX(-50%)';
+startButton.style.padding = '15px 30px';
+startButton.style.fontSize = '1.2rem';
+startButton.style.cursor = 'pointer';
+startButton.style.zIndex = '100';
+document.body.appendChild(startButton);
+
+startButton.addEventListener('click', () => {
+    initAudio();
+    startButton.style.display = 'none';
+});
+
+function updateEngineSound() {
+    if (!engineStarted) return;
+
+    const absVelocity = Math.abs(velocity);
+    
+    // Pitch modulation (40Hz idle to 150Hz max)
+    const freq = 40 + (absVelocity * 200);
+    oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
+
+    // Volume modulation
+    const volume = 0.05 + (absVelocity * 0.2);
+    gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
+}
+
 function animate() {
     requestAnimationFrame(animate);
 
     const isUp = keys.w || keys.ArrowUp;
-    const isDown = keys.s || keys.ArrowDown;
-    const isLeft = keys.a || keys.ArrowLeft;
-    const isRight = keys.d || keys.ArrowRight;
-
-    if (isUp) velocity += stats.acceleration;
-    else if (isDown) velocity -= stats.acceleration;
-    else {
-        if (velocity > 0) velocity = Math.max(0, velocity - stats.deceleration);
-        if (velocity < 0) velocity = Math.min(0, velocity + stats.deceleration);
-    }
-
-    velocity = Math.max(-stats.maxSpeed / 2, Math.min(stats.maxSpeed, velocity));
-
-    if (Math.abs(velocity) > 0.01) {
-        const turnDir = velocity > 0 ? 1 : -1;
-        if (isLeft) rotation += stats.turnSpeed * turnDir;
-        if (isRight) rotation -= stats.turnSpeed * turnDir;
-    }
-
-    carGroup.rotation.y = rotation;
-    carGroup.position.x += Math.sin(rotation) * velocity;
-    carGroup.position.z += Math.cos(rotation) * velocity;
-
-    const cameraOffset = new THREE.Vector3(0, 5, -10);
-    cameraOffset.applyQuaternion(carGroup.quaternion);
-    const targetCameraPos = carGroup.position.clone().add(cameraOffset);
-    camera.position.lerp(targetCameraPos, 0.1);
-    camera.lookAt(carGroup.position);
-
+...
     speedMeter.textContent = `${Math.round(Math.abs(velocity) * 200)} km/h`;
+    
+    updateEngineSound();
+    
     renderer.render(scene, camera);
 }
 animate();
