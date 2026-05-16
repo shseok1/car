@@ -103,6 +103,12 @@ scene.add(carGroup);
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
 let velocity = 0;
 let rotation = 0; // Face forward along Z axis
+const stats = {
+    acceleration: 0.012,
+    deceleration: 0.005,
+    maxSpeed: 1.0, // 200 km/h
+    turnSpeed: 0.04
+};
 
 window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
 window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
