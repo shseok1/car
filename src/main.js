@@ -25,41 +25,74 @@ dirLight.shadow.camera.bottom = -100;
 scene.add(dirLight);
 
 // --- Ground ---
-const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+const groundGeo = new THREE.PlaneGeometry(3000, 3000);
 const groundMat = new THREE.MeshPhongMaterial({ color: 0x348C31 }); // Grass green
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// --- Track ---
+// --- Track (Spa-Francorchamps Layout) ---
 const trackPoints = [
-    new THREE.Vector2(0, 50),
-    new THREE.Vector2(40, 40),
-    new THREE.Vector2(50, 0),
-    new THREE.Vector2(40, -40),
-    new THREE.Vector2(0, -50),
-    new THREE.Vector2(-40, -40),
-    new THREE.Vector2(-50, 0),
-    new THREE.Vector2(-40, 40),
+    new THREE.Vector2(-200, -280), // Start/Finish
+    new THREE.Vector2(-280, -350), // T1 La Source entry
+    new THREE.Vector2(-320, -320), // T1 apex
+    new THREE.Vector2(-250, -250), // Eau rouge approach
+    new THREE.Vector2(-180, -180), // Eau rouge
+    new THREE.Vector2(-100, -80),  // Raidillon
+    new THREE.Vector2(100, 100),   // Kemmel
+    new THREE.Vector2(250, 220),   // Kemmel end
+    new THREE.Vector2(300, 240),   // Les Combes entry
+    new THREE.Vector2(330, 200),   // Les Combes apex
+    new THREE.Vector2(280, 150),   // Malmedy
+    new THREE.Vector2(250, 80),    // Bruxelles entry
+    new THREE.Vector2(300, 20),    // Bruxelles apex
+    new THREE.Vector2(250, -30),   // Speaker's corner
+    new THREE.Vector2(150, -50),   // Pouhon entry
+    new THREE.Vector2(50, -120),   // Pouhon apex
+    new THREE.Vector2(80, -200),   // Fagnes entry
+    new THREE.Vector2(150, -250),  // Fagnes apex
+    new THREE.Vector2(120, -300),  // Stavelot entry
+    new THREE.Vector2(50, -350),   // Stavelot apex
+    new THREE.Vector2(-50, -350),  // Blanchimont start
+    new THREE.Vector2(-150, -320), // Blanchimont end
+    new THREE.Vector2(-220, -320), // Bus stop entry
+    new THREE.Vector2(-250, -290), // Bus stop apex
 ];
-const trackShape = new THREE.Shape();
-trackShape.moveTo(trackPoints[0].x, trackPoints[0].y);
-for (let i = 1; i < trackPoints.length; i++) {
-    trackShape.lineTo(trackPoints[i].x, trackPoints[i].y);
-}
-trackShape.closePath();
 
-const holePath = new THREE.Path();
-const innerScale = 0.7;
-holePath.moveTo(trackPoints[0].x * innerScale, trackPoints[0].y * innerScale);
-for (let i = 1; i < trackPoints.length; i++) {
-    holePath.lineTo(trackPoints[i].x * innerScale, trackPoints[i].y * innerScale);
+const curve = new THREE.SplineCurve(trackPoints);
+const points = curve.getPoints(400);
+
+const trackWidth = 16;
+const outerPoints = [];
+const innerPoints = [];
+
+for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    
+    let dx = p2.x - p1.x;
+    let dy = p2.y - p1.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if(len === 0) continue;
+    dx /= len; dy /= len;
+    
+    const nx = -dy;
+    const ny = dx;
+    
+    outerPoints.push(new THREE.Vector2(p1.x + nx * trackWidth / 2, p1.y + ny * trackWidth / 2));
+    innerPoints.push(new THREE.Vector2(p1.x - nx * trackWidth / 2, p1.y - ny * trackWidth / 2));
 }
-holePath.closePath();
+
+const trackShape = new THREE.Shape(outerPoints);
+const holePath = new THREE.Path();
+for (let i = innerPoints.length - 1; i >= 0; i--) {
+    if (i === innerPoints.length - 1) holePath.moveTo(innerPoints[i].x, innerPoints[i].y);
+    else holePath.lineTo(innerPoints[i].x, innerPoints[i].y);
+}
 trackShape.holes.push(holePath);
 
-const extrudeSettings = { depth: 0.2, bevelEnabled: false };
+const extrudeSettings = { depth: 0.2, bevelEnabled: false, curveSegments: 24 };
 const trackGeo = new THREE.ExtrudeGeometry(trackShape, extrudeSettings);
 const trackMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
 const track = new THREE.Mesh(trackGeo, trackMat);
@@ -88,20 +121,20 @@ function createTree(x, z) {
     scene.add(tree);
 }
 
-for (let i = 0; i < 20; i++) {
-    const angle = (i / 20) * Math.PI * 2;
-    createTree(Math.cos(angle) * 70, Math.sin(angle) * 70);
-    createTree(Math.cos(angle) * 30, Math.sin(angle) * 30);
+for (let i = 0; i < 200; i++) {
+    const x = (Math.random() - 0.5) * 2000;
+    const z = (Math.random() - 0.5) * 2000;
+    createTree(x, z);
 }
 
 // --- Car (Ferrari SF90 Stradale) ---
 const carGroup = new THREE.Group();
 
-// Load GLTF Model (kart-oobi.glb)
+// Load GLTF Model (race-future.glb)
 const loader = new THREE.GLTFLoader();
 
 loader.load(
-    'kart-oobi.glb',
+    'race-future.glb',
     function (gltf) {
         const kart = gltf.scene;
         
@@ -126,13 +159,13 @@ loader.load(
     }
 );
 
-carGroup.position.set(0, 0, 45); // Start position
+carGroup.position.set(-200, 0, 280); // Start position at Spa layout Start/Finish
 scene.add(carGroup);
 
 // --- Game Logic ---
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
 let velocity = 0;
-let rotation = 0;
+let rotation = Math.atan2(-80, 70); // Face from Start/Finish towards T1
 const stats = {
     acceleration: 0.012,
     deceleration: 0.005,
