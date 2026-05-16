@@ -32,38 +32,18 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// --- Track (Spa-Francorchamps Layout) ---
+// --- Track (Simple Square) ---
 const trackPoints = [
-    new THREE.Vector2(-200, -280), // Start/Finish
-    new THREE.Vector2(-280, -350), // T1 La Source entry
-    new THREE.Vector2(-320, -320), // T1 apex
-    new THREE.Vector2(-250, -250), // Eau rouge approach
-    new THREE.Vector2(-180, -180), // Eau rouge
-    new THREE.Vector2(-100, -80),  // Raidillon
-    new THREE.Vector2(100, 100),   // Kemmel
-    new THREE.Vector2(250, 220),   // Kemmel end
-    new THREE.Vector2(300, 240),   // Les Combes entry
-    new THREE.Vector2(330, 200),   // Les Combes apex
-    new THREE.Vector2(280, 150),   // Malmedy
-    new THREE.Vector2(250, 80),    // Bruxelles entry
-    new THREE.Vector2(300, 20),    // Bruxelles apex
-    new THREE.Vector2(250, -30),   // Speaker's corner
-    new THREE.Vector2(150, -50),   // Pouhon entry
-    new THREE.Vector2(50, -120),   // Pouhon apex
-    new THREE.Vector2(80, -200),   // Fagnes entry
-    new THREE.Vector2(150, -250),  // Fagnes apex
-    new THREE.Vector2(120, -300),  // Stavelot entry
-    new THREE.Vector2(50, -350),   // Stavelot apex
-    new THREE.Vector2(-50, -350),  // Blanchimont start
-    new THREE.Vector2(-150, -320), // Blanchimont end
-    new THREE.Vector2(-220, -320), // Bus stop entry
-    new THREE.Vector2(-250, -290), // Bus stop apex
+    new THREE.Vector2(-100, -100),
+    new THREE.Vector2(-100, 100),
+    new THREE.Vector2(100, 100),
+    new THREE.Vector2(100, -100),
 ];
 
 const curve = new THREE.SplineCurve(trackPoints);
-const points = curve.getPoints(400);
+const points = curve.getPoints(200);
 
-const trackWidth = 16;
+const trackWidth = 20;
 const outerPoints = [];
 const innerPoints = [];
 
@@ -92,7 +72,7 @@ for (let i = innerPoints.length - 1; i >= 0; i--) {
 }
 trackShape.holes.push(holePath);
 
-const extrudeSettings = { depth: 0.2, bevelEnabled: false, curveSegments: 24 };
+const extrudeSettings = { depth: 0.2, bevelEnabled: false, curveSegments: 12 };
 const trackGeo = new THREE.ExtrudeGeometry(trackShape, extrudeSettings);
 const trackMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
 const track = new THREE.Mesh(trackGeo, trackMat);
@@ -121,9 +101,9 @@ function createTree(x, z) {
     scene.add(tree);
 }
 
-for (let i = 0; i < 200; i++) {
-    const x = (Math.random() - 0.5) * 2000;
-    const z = (Math.random() - 0.5) * 2000;
+for (let i = 0; i < 100; i++) {
+    const x = (Math.random() - 0.5) * 1000;
+    const z = (Math.random() - 0.5) * 1000;
     createTree(x, z);
 }
 
@@ -151,13 +131,13 @@ loader.load(
     error => console.error(error)
 );
 
-carGroup.position.set(-200, 0, 280); 
+carGroup.position.set(-100, 0, 0); 
 scene.add(carGroup);
 
 // --- Game Logic ---
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
 let velocity = 0;
-let rotation = Math.atan2(-80, 70); 
+let rotation = Math.PI; 
 const stats = {
     acceleration: 0.012,
     deceleration: 0.005,
