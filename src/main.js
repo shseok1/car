@@ -77,22 +77,62 @@ const carGroup = new THREE.Group();
 
 // Load Model
 const loader = new THREE.GLTFLoader();
-const redMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+const navyMaterial = new THREE.MeshPhongMaterial({ color: 0x001a30, shininess: 30 }); // Matte Dark Blue
+const yellowMaterial = new THREE.MeshPhongMaterial({ color: 0xffcc00, shininess: 50 }); // Yellow Accent
+const redAccentMat = new THREE.MeshPhongMaterial({ color: 0xee0000, shininess: 50 }); // Red Accent
 
 loader.load(
     'race-future.glb',
     function (gltf) {
         const model = gltf.scene;
-        model.scale.set(1, 1, 1);
+        model.scale.set(1.1, 1, 1.2); // Make it slightly longer/wider like F1
         model.rotation.y = Math.PI;
         model.position.y = 0.2;
+        
         model.traverse(child => {
             if (child.isMesh) {
-                child.material = redMaterial; // Apply red color
+                // Heuristic to color different parts
+                if (child.name.toLowerCase().includes('wing') || child.name.toLowerCase().includes('spoiler')) {
+                    child.material = yellowMaterial;
+                } else if (child.name.toLowerCase().includes('body')) {
+                    child.material = navyMaterial;
+                } else {
+                    child.material = navyMaterial;
+                }
                 child.castShadow = true;
                 child.receiveShadow = true;
             }
         });
+        
+        // Add "RED BULL" decals
+        function createDecal(text, x, y, z, rotY = 0, scale = 1) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)'; // Transparent
+            ctx.clearRect(0,0,512,128);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'Bold 80px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 256, 80);
+            
+            const tex = new THREE.CanvasTexture(canvas);
+            const geo = new THREE.PlaneGeometry(2 * scale, 0.5 * scale);
+            const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+            const decal = new THREE.Mesh(geo, mat);
+            decal.position.set(x, y, z);
+            decal.rotation.y = rotY;
+            return decal;
+        }
+
+        // Left side decal
+        carGroup.add(createDecal('RED BULL', -0.8, 0.6, 0.5, -Math.PI/2, 0.8));
+        // Right side decal
+        carGroup.add(createDecal('RED BULL', 0.8, 0.6, 0.5, Math.PI/2, 0.8));
+        // Rear wing decal
+        carGroup.add(createDecal('GIVES YOU WINGS', 0, 1.2, -1.8, Math.PI, 0.6));
+
         carGroup.add(model);
     },
     undefined,
