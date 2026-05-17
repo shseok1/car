@@ -99,7 +99,7 @@ function createGrandstand(x, z, rotation) {
     const pillarMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
     [-1, 1].forEach(side => {
         const p = new THREE.Mesh(pillarGeo, pillarMat);
-        p.position.set(side * (stepWidth / 2), 3, -1);
+        p.position.set(side * (stepWidth / 2 - 1), 3, (stepCount * stepDepth) - 1); // Move to the back
         stand.add(p);
     });
 
@@ -108,11 +108,11 @@ function createGrandstand(x, z, rotation) {
     scene.add(stand);
 }
 
-// Place Stadium Parts
-createGrandstand(85, 0, -Math.PI / 2);
-createGrandstand(-85, 0, Math.PI / 2);
-createGrandstand(0, 85, Math.PI);
-createGrandstand(0, -85, 0);
+// Place Stadium Parts (Corrected to face center)
+createGrandstand(85, 0, Math.PI / 2);
+createGrandstand(-85, 0, -Math.PI / 2);
+createGrandstand(0, 85, 0);
+createGrandstand(0, -85, Math.PI);
 
 for (let i = 0; i < 60; i++) {
     const angle = (i / 60) * Math.PI * 2;
@@ -169,10 +169,19 @@ const stats = {
 };
 
 window.addEventListener('keydown', (e) => { 
+    const key = e.key.toLowerCase();
     if (keys.hasOwnProperty(e.key)) keys[e.key] = true; 
-    if (e.key.toLowerCase() === 'c') viewMode = (viewMode + 1) % 2; // Toggle view
+    if (keys.hasOwnProperty(key)) keys[key] = true; // Support case-insensitive (W/A/S/D)
+    
+    if (key === 'c') {
+        viewMode = (viewMode + 1) % 2; // Toggle view
+    }
 });
-window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+window.addEventListener('keyup', (e) => { 
+    const key = e.key.toLowerCase();
+    if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
+    if (keys.hasOwnProperty(key)) keys[key] = false;
+});
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
