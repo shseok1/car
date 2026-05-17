@@ -427,14 +427,29 @@ function initAudio() {
     engineStarted = true;
 }
 
-const startScreen = document.getElementById('start-screen');
-const startButton = document.getElementById('start-button');
-const nicknameInput = document.getElementById('nickname-input');
-const leaderboardList = document.getElementById('leaderboard-list');
-const modalLeaderboardList = document.getElementById('modal-leaderboard-list');
-const rankingOverlay = document.getElementById('ranking-overlay');
-const showRankingBtn = document.getElementById('show-ranking-btn');
-const closeRankingBtn = document.getElementById('close-ranking-btn');
+// --- Audio System ---
+let audioCtx;
+let oscillator;
+let gainNode;
+let engineStarted = false;
+
+function initAudio() {
+    if (engineStarted) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    oscillator = audioCtx.createOscillator();
+    gainNode = audioCtx.createGain();
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(40, audioCtx.currentTime);
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, audioCtx.currentTime);
+    oscillator.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.start();
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    engineStarted = true;
+}
 
 let gameStarted = false;
 let userNickname = "Guest";
