@@ -399,7 +399,20 @@ let userNickname = "Guest";
 // --- Leaderboard System ---
 function saveRecord(nickname, time) {
     let records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
-    records.push({ nickname, time });
+    
+    // Check if user already has a record
+    const existingIndex = records.findIndex(r => r.nickname === nickname);
+    
+    if (existingIndex !== -1) {
+        // Update only if the new time is better (lower)
+        if (time < records[existingIndex].time) {
+            records[existingIndex].time = time;
+        }
+    } else {
+        // Add new record
+        records.push({ nickname, time });
+    }
+    
     records.sort((a, b) => a.time - b.time);
     records = records.slice(0, 5); // Keep top 5
     localStorage.setItem('racing_leaderboard', JSON.stringify(records));
