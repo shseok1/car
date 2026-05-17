@@ -175,10 +175,10 @@ createGrandstand(0, 85, 0);
 createGrandstand(0, -85, Math.PI);
 
 // Place Billboards next to grandstands
-createBillboard(85, 30, Math.PI / 2);
-createBillboard(-85, -30, -Math.PI / 2);
-createBillboard(-30, 85, 0);
-createBillboard(30, -85, Math.PI);
+createBillboard(85, 30, -Math.PI / 2);
+createBillboard(-85, -30, Math.PI / 2);
+createBillboard(-30, 85, Math.PI);
+createBillboard(30, -85, 0);
 
 for (let i = 0; i < 60; i++) {
     const angle = (i / 60) * Math.PI * 2;
