@@ -397,9 +397,27 @@ function animate() {
     carGroup.position.x += Math.sin(rotation) * velocity;
     carGroup.position.z += Math.cos(rotation) * velocity;
 
-    // --- Banked Track Physics ---
+    // --- Banked Track Physics & Collision ---
     const dist = Math.sqrt(carGroup.position.x ** 2 + carGroup.position.z ** 2);
-    if (dist >= innerRadius && dist <= outerRadius) {
+    
+    // Hard boundary at Catch Fence (Outer) and Inner Grass
+    const safeOuter = outerRadius - 1.5;
+    const safeInner = innerRadius + 1;
+    
+    if (dist > safeOuter) {
+        const factor = safeOuter / dist;
+        carGroup.position.x *= factor;
+        carGroup.position.z *= factor;
+        velocity *= 0.8; // Friction on fence
+    } else if (dist < safeInner) {
+        const factor = safeInner / dist;
+        carGroup.position.x *= factor;
+        carGroup.position.z *= factor;
+        velocity *= 0.9; // Friction on inner edge
+    }
+
+    const currentDist = Math.sqrt(carGroup.position.x ** 2 + carGroup.position.z ** 2);
+    if (currentDist >= innerRadius && currentDist <= outerRadius) {
         // Calculate height based on distance from center (linear interpolation)
         const t = (dist - innerRadius) / (outerRadius - innerRadius);
         const targetY = t * 8 + 0.2; // 8 is the height difference
