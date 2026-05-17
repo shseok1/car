@@ -94,6 +94,21 @@ rail.rotation.x = Math.PI / 2;
 rail.position.y = 20;
 scene.add(rail);
 
+// --- Finish Line ---
+const finishLineGeo = new THREE.BoxGeometry(outerRadius - innerRadius, 0.2, 4);
+const finishLineMat = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+const finishLine = new THREE.Mesh(finishLineGeo, finishLineMat);
+finishLine.position.set(0, 4.1, 50); // Mid-height of banking at the start position
+finishLine.rotation.y = Math.PI / 2; // Orient across the track
+scene.add(finishLine);
+
+// Add checkerboard pattern to finish line
+const loaderImg = new THREE.TextureLoader();
+const checkerTexture = loaderImg.load('https://threejs.org/examples/textures/checker.png');
+checkerTexture.wrapS = checkerTexture.wrapT = THREE.RepeatWrapping;
+checkerTexture.repeat.set(4, 1);
+finishLine.material.map = checkerTexture;
+
 // --- Decoration (Trees & Stadium) ---
 function createTree(x, z) {
     const tree = new THREE.Group();
@@ -389,9 +404,33 @@ function updateEngineSound() {
     gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
 }
 
+// --- Lap Timing System ---
+let lapStartTime = 0;
+let bestLapTime = Infinity;
+let lapCount = 0;
+let hasPassedHalfway = false;
+const currentLapDisplay = document.getElementById('current-lap');
+const bestLapDisplay = document.getElementById('best-lap');
+const lapCountDisplay = document.getElementById('lap-count');
+
+function formatTime(ms) {
+    if (ms === Infinity) return "--:--.--";
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    const hundredths = Math.floor((ms % 1000) / 10);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+}
+
 function animate() {
     requestAnimationFrame(animate);
-    if (!gameStarted) return;
+    if (!gameStarted) {
+        lapStartTime = performance.now();
+        return;
+    }
+    
+    const currentTime = performance.now();
+    const lapTime = currentTime - lapStartTime;
+    currentLapDisplay.textContent = `LAP TIME: ${formatTime(lapTime)}`;
     
     const isUp = keys.w || keys.ArrowUp;
     const isDown = keys.s || keys.ArrowDown;
@@ -446,6 +485,25 @@ function animate() {
         // Tilt car to match banking
         const slopeAngle = Math.atan2(8, outerRadius - innerRadius);
         carGroup.rotation.z = -slopeAngle; 
+
+        // --- Lap Detection Logic ---
+        // Finish Line is at Z = 50, X = 0
+        // Halfway point is at Z = -50, X = 0
+        if (carGroup.position.z < -40) {
+            hasPassedHalfway = true;
+        }
+
+        if (hasPassedHalfway && carGroup.position.z > 48 && carGroup.position.z < 52 && Math.abs(carGroup.position.x) < 20) {
+            const finalLapTime = currentTime - lapStartTime;
+            if (finalLapTime < bestLapTime) {
+                bestLapTime = finalLapTime;
+                bestLapDisplay.textContent = `BEST LAP: ${formatTime(bestLapTime)}`;
+            }
+            lapCount++;
+            lapCountDisplay.textContent = `LAPS: ${lapCount}`;
+            lapStartTime = currentTime;
+            hasPassedHalfway = false;
+        }
     } else {
         carGroup.position.y = 0.2;
         carGroup.rotation.z = 0;
