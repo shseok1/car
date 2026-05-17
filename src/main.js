@@ -74,6 +74,26 @@ track.position.y = 0.05;
 track.receiveShadow = true;
 scene.add(track);
 
+// --- Catch Fence (Outer Barrier) ---
+const fenceGeo = new THREE.CylinderGeometry(outerRadius, outerRadius, 12, 128, 1, true);
+const fenceMat = new THREE.MeshPhongMaterial({ 
+    color: 0xcccccc, 
+    transparent: true, 
+    opacity: 0.5, 
+    side: THREE.DoubleSide 
+});
+const fence = new THREE.Mesh(fenceGeo, fenceMat);
+fence.position.y = 14; 
+scene.add(fence);
+
+// Add Top Rail
+const railGeo = new THREE.TorusGeometry(outerRadius, 0.5, 8, 128);
+const railMat = new THREE.MeshPhongMaterial({ color: 0x444444 });
+const rail = new THREE.Mesh(railGeo, railMat);
+rail.rotation.x = Math.PI / 2;
+rail.position.y = 20;
+scene.add(rail);
+
 // --- Decoration (Trees & Stadium) ---
 function createTree(x, z) {
     const tree = new THREE.Group();
@@ -408,7 +428,7 @@ function animate() {
         const factor = safeOuter / dist;
         carGroup.position.x *= factor;
         carGroup.position.z *= factor;
-        velocity *= 0.8; // Friction on fence
+        velocity *= 0.98; // Slide along the wall with less friction
     } else if (dist < safeInner) {
         const factor = safeInner / dist;
         carGroup.position.x *= factor;
@@ -424,8 +444,8 @@ function animate() {
         carGroup.position.y = targetY;
         
         // Tilt car to match banking
-        const tilt = t * 0.4; // Approximately matching the slope
-        carGroup.rotation.z = -tilt; 
+        const slopeAngle = Math.atan2(8, outerRadius - innerRadius);
+        carGroup.rotation.z = -slopeAngle; 
     } else {
         carGroup.position.y = 0.2;
         carGroup.rotation.z = 0;
