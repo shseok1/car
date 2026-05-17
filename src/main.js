@@ -32,12 +32,45 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// --- Track (Original Circular Layout) ---
-const trackGeo = new THREE.RingGeometry(40, 60, 64);
+// --- Track (Banked NASCAR Style) ---
+const innerRadius = 40;
+const outerRadius = 60;
+const segments = 128;
+const bankingAngle = 0.15; // NASCAR style banking
+
+const trackGeo = new THREE.BufferGeometry();
+const vertices = [];
+const indices = [];
+const uvs = [];
+
+for (let i = 0; i <= segments; i++) {
+    const angle = (i / segments) * Math.PI * 2;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    // Inner point (Lowered for banking)
+    vertices.push(innerRadius * cos, -2, innerRadius * sin);
+    // Outer point (Original height)
+    vertices.push(outerRadius * cos, 0, outerRadius * sin);
+
+    uvs.push(0, i / segments);
+    uvs.push(1, i / segments);
+
+    if (i < segments) {
+        const base = i * 2;
+        indices.push(base, base + 1, base + 2);
+        indices.push(base + 1, base + 3, base + 2);
+    }
+}
+
+trackGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+trackGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+trackGeo.setIndex(indices);
+trackGeo.computeVertexNormals();
+
 const trackMat = new THREE.MeshPhongMaterial({ color: 0x333333, side: THREE.DoubleSide });
 const track = new THREE.Mesh(trackGeo, trackMat);
-track.rotation.x = -Math.PI / 2;
-track.position.y = 0.05;
+track.position.y = 2.05; // Lift up slightly to match the banking base
 track.receiveShadow = true;
 scene.add(track);
 
