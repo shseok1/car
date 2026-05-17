@@ -95,18 +95,21 @@ rail.position.y = 20;
 scene.add(rail);
 
 // --- Finish Line ---
-const finishLineGeo = new THREE.BoxGeometry(outerRadius - innerRadius, 0.2, 4);
+const slopeAngle = Math.atan2(8, outerRadius - innerRadius);
+const finishLineGeo = new THREE.PlaneGeometry(8, outerRadius - innerRadius); // 8 units wide along track
 const finishLineMat = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
 const finishLine = new THREE.Mesh(finishLineGeo, finishLineMat);
-finishLine.position.set(0, 4.1, 50); // Mid-height of banking at the start position
-finishLine.rotation.y = Math.PI / 2; // Orient across the track
+
+// Radial line at x=0, z=50 (spanning z=40 to z=60)
+finishLine.position.set(0, 4.05, 50); 
+finishLine.rotation.x = -Math.PI / 2 - slopeAngle;
 scene.add(finishLine);
 
 // Add checkerboard pattern to finish line
 const loaderImg = new THREE.TextureLoader();
 const checkerTexture = loaderImg.load('https://threejs.org/examples/textures/checker.png');
 checkerTexture.wrapS = checkerTexture.wrapT = THREE.RepeatWrapping;
-checkerTexture.repeat.set(4, 1);
+checkerTexture.repeat.set(1, 4); // 4 checkers across the track
 finishLine.material.map = checkerTexture;
 
 // --- Decoration (Trees & Stadium) ---
@@ -486,14 +489,16 @@ function animate() {
         const slopeAngle = Math.atan2(8, outerRadius - innerRadius);
         carGroup.rotation.z = -slopeAngle; 
 
-        // --- Lap Detection Logic ---
-        // Finish Line is at Z = 50, X = 0
-        // Halfway point is at Z = -50, X = 0
-        if (carGroup.position.z < -40) {
+        // --- Lap Detection Logic (Angle-based) ---
+        const carAngle = Math.atan2(carGroup.position.x, carGroup.position.z);
+        
+        // Halfway point is the opposite side (around PI or -PI)
+        if (Math.abs(carAngle) > 2.5) {
             hasPassedHalfway = true;
         }
 
-        if (hasPassedHalfway && carGroup.position.z > 48 && carGroup.position.z < 52 && Math.abs(carGroup.position.x) < 20) {
+        // Finish line is at angle 0. Detect crossing from halfway.
+        if (hasPassedHalfway && Math.abs(carAngle) < 0.1) {
             const finalLapTime = currentTime - lapStartTime;
             if (finalLapTime < bestLapTime) {
                 bestLapTime = finalLapTime;
