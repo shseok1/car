@@ -108,11 +108,77 @@ function createGrandstand(x, z, rotation) {
     scene.add(stand);
 }
 
+function createBillboard(x, z, rotation) {
+    const billboard = new THREE.Group();
+    
+    // Create Canvas for Text
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 512;
+    canvas.height = 256;
+    
+    // Background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Border
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth = 20;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 80px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 15;
+    ctx.fillText('이수현', canvas.width / 2, canvas.height / 2);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    
+    // Screen Mesh
+    const screenGeo = new THREE.PlaneGeometry(20, 10);
+    const screenMat = new THREE.MeshPhongMaterial({ 
+        map: texture,
+        emissive: 0x555555,
+        side: THREE.DoubleSide 
+    });
+    const screen = new THREE.Mesh(screenGeo, screenMat);
+    screen.position.y = 15;
+    billboard.add(screen);
+    
+    // Frame
+    const frameGeo = new THREE.BoxGeometry(21, 11, 1);
+    const frameMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+    const frame = new THREE.Mesh(frameGeo, frameMat);
+    frame.position.y = 15;
+    frame.position.z = -0.6;
+    billboard.add(frame);
+    
+    // Stand/Pillar
+    const standGeo = new THREE.BoxGeometry(2, 10, 2);
+    const standMat = new THREE.MeshPhongMaterial({ color: 0x555555 });
+    const stand = new THREE.Mesh(standGeo, standMat);
+    stand.position.y = 5;
+    billboard.add(stand);
+    
+    billboard.position.set(x, 0, z);
+    billboard.rotation.y = rotation;
+    scene.add(billboard);
+}
+
 // Place Stadium Parts (Corrected to face center)
 createGrandstand(85, 0, Math.PI / 2);
 createGrandstand(-85, 0, -Math.PI / 2);
 createGrandstand(0, 85, 0);
 createGrandstand(0, -85, Math.PI);
+
+// Place Billboards next to grandstands
+createBillboard(85, 30, Math.PI / 2);
+createBillboard(-85, -30, -Math.PI / 2);
+createBillboard(-30, 85, 0);
+createBillboard(30, -85, Math.PI);
 
 for (let i = 0; i < 60; i++) {
     const angle = (i / 60) * Math.PI * 2;
