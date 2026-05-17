@@ -510,7 +510,10 @@ async function saveRecord(nickname, time) {
             // Existing user
             const doc = querySnapshot.docs[0];
             if (time < doc.data().time) {
-                await doc.ref.update({ time: time, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                await doc.ref.update({ 
+                    time: time, 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                });
             }
         } else {
             // New user
@@ -520,56 +523,54 @@ async function saveRecord(nickname, time) {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
-        displayLeaderboard();
+        // No need to call displayLeaderboard manually if using onSnapshot
     } catch (error) {
         console.error("Error saving record:", error);
     }
 }
 
-async function displayLeaderboard() {
-    try {
-        const querySnapshot = await db.collection('leaderboard')
-            .orderBy("time", "asc")
-            .limit(5)
-            .get();
+// Real-time synchronization
+function initLeaderboardSync() {
+    db.collection('leaderboard')
+        .orderBy("time", "asc")
+        .limit(5)
+        .onSnapshot((querySnapshot) => {
+            const records = [];
+            querySnapshot.forEach(doc => records.push(doc.data()));
             
-        leaderboardList.innerHTML = '';
-        modalLeaderboardList.innerHTML = '';
-        
-        const records = [];
-        querySnapshot.forEach(doc => records.push(doc.data()));
-        
-        // Update 3D Billboard
-        updateRankingBillboardTexture(records);
-
-        if (records.length === 0) {
-            const noRecord = '<li>기록이 없습니다.</li>';
-            leaderboardList.innerHTML = noRecord;
-            modalLeaderboardList.innerHTML = noRecord;
-            return;
-        }
-        
-        records.forEach((rec, index) => {
-            const li = document.createElement('li');
-            const content = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
-            li.innerHTML = content;
-            leaderboardList.appendChild(li);
+            // Update UI
+            leaderboardList.innerHTML = '';
+            modalLeaderboardList.innerHTML = '';
             
-            const modalLi = document.createElement('li');
-            modalLi.innerHTML = content;
-            modalLeaderboardList.appendChild(modalLi);
+            if (records.length === 0) {
+                const noRecord = '<li>기록이 없습니다.</li>';
+                leaderboardList.innerHTML = noRecord;
+                modalLeaderboardList.innerHTML = noRecord;
+            } else {
+                records.forEach((rec, index) => {
+                    const li = document.createElement('li');
+                    const content = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
+                    li.innerHTML = content;
+                    leaderboardList.appendChild(li);
+                    
+                    const modalLi = document.createElement('li');
+                    modalLi.innerHTML = content;
+                    modalLeaderboardList.appendChild(modalLi);
+                });
+            }
+            
+            // Update 3D Billboard
+            updateRankingBillboardTexture(records);
+        }, (error) => {
+            console.error("Leaderboard sync error:", error);
         });
-    } catch (error) {
-        console.error("Error fetching leaderboard:", error);
-    }
 }
 
-// Initial display
-displayLeaderboard();
+// Start synchronization
+initLeaderboardSync();
 
 // UI Events
 showRankingBtn.addEventListener('click', () => {
-    displayLeaderboard();
     rankingOverlay.classList.remove('hidden');
 });
 
