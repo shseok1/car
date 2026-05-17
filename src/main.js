@@ -239,40 +239,6 @@ function createBillboard(x, z, rotation) {
     scene.add(billboard);
 }
 
-function createRankingBillboard(x, z, rotation) {
-    const billboard = new THREE.Group();
-    
-    // Screen Mesh (Square for ranking)
-    const screenGeo = new THREE.PlaneGeometry(20, 20);
-    rankingBillboardMat = new THREE.MeshPhongMaterial({ 
-        color: 0xffffff,
-        emissive: 0x333333,
-        side: THREE.DoubleSide 
-    });
-    const screen = new THREE.Mesh(screenGeo, rankingBillboardMat);
-    screen.position.y = 20;
-    billboard.add(screen);
-    
-    // Frame
-    const frameGeo = new THREE.BoxGeometry(21, 21, 1);
-    const frameMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
-    const frame = new THREE.Mesh(frameGeo, frameMat);
-    frame.position.y = 20;
-    frame.position.z = -0.6;
-    billboard.add(frame);
-    
-    // Stand/Pillar
-    const standGeo = new THREE.BoxGeometry(2, 10, 2);
-    const standMat = new THREE.MeshPhongMaterial({ color: 0x555555 });
-    const stand = new THREE.Mesh(standGeo, standMat);
-    stand.position.y = 5;
-    billboard.add(stand);
-    
-    billboard.position.set(x, 0, z);
-    billboard.rotation.y = rotation;
-    scene.add(billboard);
-}
-
 // Place Stadium Parts (Corrected to face center)
 createGrandstand(85, 0, Math.PI / 2);
 createGrandstand(-85, 0, -Math.PI / 2);
@@ -284,10 +250,6 @@ createBillboard(85, 30, -Math.PI / 2);
 createBillboard(-85, -30, Math.PI / 2);
 createBillboard(-30, 85, Math.PI);
 createBillboard(30, -85, 0);
-
-// Place Ranking Billboard in a prominent spot
-createRankingBillboard(0, 0, 0); // Center of the track for maximum visibility
-rankingBillboardMat.depthTest = true; // Ensure it renders correctly
 
 for (let i = 0; i < 60; i++) {
     const angle = (i / 60) * Math.PI * 2;
@@ -427,191 +389,46 @@ function initAudio() {
     engineStarted = true;
 }
 
-// --- Audio System ---
-let audioCtx;
-let oscillator;
-let gainNode;
-let engineStarted = false;
-
-function initAudio() {
-    if (engineStarted) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    oscillator = audioCtx.createOscillator();
-    gainNode = audioCtx.createGain();
-    oscillator.type = 'sawtooth';
-    oscillator.frequency.setValueAtTime(40, audioCtx.currentTime);
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(600, audioCtx.currentTime);
-    oscillator.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.start();
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    engineStarted = true;
-}
-
+const startScreen = document.getElementById('start-screen');
+const startButton = document.getElementById('start-button');
+const nicknameInput = document.getElementById('nickname-input');
+const leaderboardList = document.getElementById('leaderboard-list');
 let gameStarted = false;
 let userNickname = "Guest";
 
-// --- Firebase Initialization ---
-const firebaseConfig = {
-    apiKey: "AIzaSyDT0FpXeO5KOw4TZs4gkaA9HTNgu4n-UpI",
-    authDomain: "sheosk-c600c.firebaseapp.com",
-    projectId: "sheosk-c600c",
-    storageBucket: "sheosk-c600c.firebasestorage.app",
-    messagingSenderId: "797411429608",
-    appId: "1:797411429608:web:53fad5a2a414ce9e284d5d",
-    measurementId: "G-2SSFCXFZX7"
-};
+// --- Leaderboard System ---
+function saveRecord(nickname, time) {
+    let records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
+    records.push({ nickname, time });
+    records.sort((a, b) => a.time - b.time);
+    records = records.slice(0, 5); // Keep top 5
+    localStorage.setItem('racing_leaderboard', JSON.stringify(records));
+    displayLeaderboard();
+}
 
-// Use Compat version to match index.html scripts
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// --- Ranking Billboard Texture Logic ---
-let rankingBillboardMat;
-function updateRankingBillboardTexture(records) {
-    if (!rankingBillboardMat) return;
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 512;
-    canvas.height = 512;
-    
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.strokeStyle = '#00ffcc';
-    ctx.lineWidth = 15;
-    ctx.strokeRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = '#ffcc00';
-    ctx.font = 'bold 50px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('🏆 TOP 5 RANKING', canvas.width / 2, 80);
-    
-    ctx.textAlign = 'left';
-    ctx.font = 'bold 35px Courier New';
-    ctx.fillStyle = '#ffffff';
-    
+function displayLeaderboard() {
+    const records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
+    leaderboardList.innerHTML = '';
     if (records.length === 0) {
-        ctx.textAlign = 'center';
-        ctx.fillText('No Records Yet', canvas.width / 2, 250);
-    } else {
-        records.forEach((rec, i) => {
-            const y = 160 + i * 70;
-            ctx.fillText(`${i + 1}. ${rec.nickname.padEnd(10, ' ')}`, 50, y);
-            ctx.textAlign = 'right';
-            ctx.fillText(formatTime(rec.time), canvas.width - 50, y);
-            ctx.textAlign = 'left';
-        });
+        leaderboardList.innerHTML = '<li>기록이 없습니다.</li>';
+        return;
     }
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    if (rankingBillboardMat.map) rankingBillboardMat.map.dispose();
-    rankingBillboardMat.map = texture;
-    rankingBillboardMat.needsUpdate = true;
+    records.forEach((rec, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
+        leaderboardList.appendChild(li);
+    });
 }
 
-// --- Global Leaderboard System (Firebase) ---
-async function saveRecord(nickname, time) {
-    try {
-        const leaderboardRef = db.collection('leaderboard');
-        const q = leaderboardRef.where("nickname", "==", nickname);
-        const querySnapshot = await q.get();
+// Initial display
+displayLeaderboard();
 
-        if (!querySnapshot.empty) {
-            // Existing user
-            const doc = querySnapshot.docs[0];
-            if (time < doc.data().time) {
-                await doc.ref.update({ 
-                    time: time, 
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-                });
-            }
-        } else {
-            // New user
-            await leaderboardRef.add({
-                nickname: nickname,
-                time: time,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-        // No need to call displayLeaderboard manually if using onSnapshot
-    } catch (error) {
-        console.error("Error saving record:", error);
-    }
-}
-
-// Real-time synchronization
-function initLeaderboardSync() {
-    db.collection('leaderboard')
-        .orderBy("time", "asc")
-        .limit(5)
-        .onSnapshot((querySnapshot) => {
-            const records = [];
-            querySnapshot.forEach(doc => records.push(doc.data()));
-            
-            // Update UI
-            leaderboardList.innerHTML = '';
-            modalLeaderboardList.innerHTML = '';
-            
-            if (records.length === 0) {
-                const noRecord = '<li>기록이 없습니다.</li>';
-                leaderboardList.innerHTML = noRecord;
-                modalLeaderboardList.innerHTML = noRecord;
-            } else {
-                records.forEach((rec, index) => {
-                    const li = document.createElement('li');
-                    const content = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
-                    li.innerHTML = content;
-                    leaderboardList.appendChild(li);
-                    
-                    const modalLi = document.createElement('li');
-                    modalLi.innerHTML = content;
-                    modalLeaderboardList.appendChild(modalLi);
-                });
-            }
-            
-            // Update 3D Billboard
-            updateRankingBillboardTexture(records);
-        }, (error) => {
-            console.error("Leaderboard sync error:", error);
-        });
-}
-
-// Start synchronization
-initLeaderboardSync();
-
-// UI Events
-window.onload = () => {
-    console.log("Window loaded, attaching listeners...");
-    const startButton = document.getElementById('start-button');
-    const rankingOverlay = document.getElementById('ranking-overlay');
-    const showRankingBtn = document.getElementById('show-ranking-btn');
-    const closeRankingBtn = document.getElementById('close-ranking-btn');
-    const nicknameInput = document.getElementById('nickname-input');
-    const startScreen = document.getElementById('start-screen');
-
-    if (!startButton) console.error("Start button not found!");
-
-    showRankingBtn.addEventListener('click', () => {
-        rankingOverlay.classList.remove('hidden');
-    });
-
-    closeRankingBtn.addEventListener('click', () => {
-        rankingOverlay.classList.add('hidden');
-    });
-
-    startButton.addEventListener('click', () => {
-        userNickname = nicknameInput.value.trim() || "Guest";
-        console.log("Game starting for:", userNickname);
-        initAudio();
-        startScreen.style.display = 'none';
-        gameStarted = true;
-    });
-};
+startButton.addEventListener('click', () => {
+    userNickname = nicknameInput.value.trim() || "Guest";
+    initAudio();
+    startScreen.style.display = 'none';
+    gameStarted = true;
+});
 
 function updateEngineSound() {
     if (!engineStarted) return;
