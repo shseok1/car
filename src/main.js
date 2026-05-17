@@ -252,21 +252,14 @@ function initAudio() {
     engineStarted = true;
 }
 
-const startButton = document.createElement('button');
-startButton.textContent = '엔진 시동 걸기 (V8 Sound)';
-startButton.style.position = 'absolute';
-startButton.style.bottom = '20px';
-startButton.style.left = '50%';
-startButton.style.transform = 'translateX(-50%)';
-startButton.style.padding = '15px 30px';
-startButton.style.fontSize = '1.2rem';
-startButton.style.cursor = 'pointer';
-startButton.style.zIndex = '100';
-document.body.appendChild(startButton);
+const startScreen = document.getElementById('start-screen');
+const startButton = document.getElementById('start-button');
+let gameStarted = false;
 
 startButton.addEventListener('click', () => {
     initAudio();
-    startButton.style.display = 'none';
+    startScreen.style.display = 'none';
+    gameStarted = true;
 });
 
 function updateEngineSound() {
@@ -279,6 +272,8 @@ function updateEngineSound() {
 
 function animate() {
     requestAnimationFrame(animate);
+    if (!gameStarted) return;
+    
     const isUp = keys.w || keys.ArrowUp;
     const isDown = keys.s || keys.ArrowDown;
     const isLeft = keys.a || keys.ArrowLeft;
