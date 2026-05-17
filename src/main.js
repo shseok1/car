@@ -585,13 +585,16 @@ function initLeaderboardSync() {
 initLeaderboardSync();
 
 // UI Events
-document.addEventListener('DOMContentLoaded', () => {
+window.onload = () => {
+    console.log("Window loaded, attaching listeners...");
     const startButton = document.getElementById('start-button');
     const rankingOverlay = document.getElementById('ranking-overlay');
     const showRankingBtn = document.getElementById('show-ranking-btn');
     const closeRankingBtn = document.getElementById('close-ranking-btn');
     const nicknameInput = document.getElementById('nickname-input');
     const startScreen = document.getElementById('start-screen');
+
+    if (!startButton) console.error("Start button not found!");
 
     showRankingBtn.addEventListener('click', () => {
         rankingOverlay.classList.remove('hidden');
@@ -603,11 +606,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startButton.addEventListener('click', () => {
         userNickname = nicknameInput.value.trim() || "Guest";
+        console.log("Game starting for:", userNickname);
         initAudio();
         startScreen.style.display = 'none';
         gameStarted = true;
     });
-});
+};
 
 function updateEngineSound() {
     if (!engineStarted) return;
