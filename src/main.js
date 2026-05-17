@@ -173,7 +173,7 @@ window.addEventListener('keydown', (e) => {
     if (keys.hasOwnProperty(e.key)) keys[e.key] = true; 
     if (keys.hasOwnProperty(key)) keys[key] = true; // Support case-insensitive (W/A/S/D)
     
-    if (key === 'c') {
+    if (key === 'c' || key === 'ㅊ') {
         viewMode = (viewMode + 1) % 2; // Toggle view
     }
 });
