@@ -605,7 +605,6 @@ window.onload = () => {
     });
 
     startButton.addEventListener('click', () => {
-        alert("게임 시작 클릭됨!");
         userNickname = nicknameInput.value.trim() || "Guest";
         console.log("Game starting for:", userNickname);
         initAudio();
