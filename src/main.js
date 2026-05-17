@@ -49,9 +49,9 @@ for (let i = 0; i <= segments; i++) {
     const sin = Math.sin(angle);
 
     // Inner point (Lowered for banking)
-    vertices.push(innerRadius * cos, -2, innerRadius * sin);
-    // Outer point (Original height)
-    vertices.push(outerRadius * cos, 0, outerRadius * sin);
+    vertices.push(innerRadius * cos, 0, innerRadius * sin);
+    // Outer point (Raised for steeper banking)
+    vertices.push(outerRadius * cos, 8, outerRadius * sin);
 
     uvs.push(0, i / segments);
     uvs.push(1, i / segments);
@@ -70,7 +70,7 @@ trackGeo.computeVertexNormals();
 
 const trackMat = new THREE.MeshPhongMaterial({ color: 0x333333, side: THREE.DoubleSide });
 const track = new THREE.Mesh(trackGeo, trackMat);
-track.position.y = 2.05; // Lift up slightly to match the banking base
+track.position.y = 0.05; 
 track.receiveShadow = true;
 scene.add(track);
 
@@ -396,6 +396,22 @@ function animate() {
     carGroup.rotation.y = rotation;
     carGroup.position.x += Math.sin(rotation) * velocity;
     carGroup.position.z += Math.cos(rotation) * velocity;
+
+    // --- Banked Track Physics ---
+    const dist = Math.sqrt(carGroup.position.x ** 2 + carGroup.position.z ** 2);
+    if (dist >= innerRadius && dist <= outerRadius) {
+        // Calculate height based on distance from center (linear interpolation)
+        const t = (dist - innerRadius) / (outerRadius - innerRadius);
+        const targetY = t * 8 + 0.2; // 8 is the height difference
+        carGroup.position.y = targetY;
+        
+        // Tilt car to match banking
+        const tilt = t * 0.4; // Approximately matching the slope
+        carGroup.rotation.z = -tilt; 
+    } else {
+        carGroup.position.y = 0.2;
+        carGroup.rotation.z = 0;
+    }
 
     // Camera follow logic based on viewMode
     let cameraOffset;
