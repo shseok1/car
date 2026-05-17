@@ -570,19 +570,28 @@ function initLeaderboardSync() {
 initLeaderboardSync();
 
 // UI Events
-showRankingBtn.addEventListener('click', () => {
-    rankingOverlay.classList.remove('hidden');
-});
+document.addEventListener('DOMContentLoaded', () => {
+    const startButton = document.getElementById('start-button');
+    const rankingOverlay = document.getElementById('ranking-overlay');
+    const showRankingBtn = document.getElementById('show-ranking-btn');
+    const closeRankingBtn = document.getElementById('close-ranking-btn');
+    const nicknameInput = document.getElementById('nickname-input');
+    const startScreen = document.getElementById('start-screen');
 
-closeRankingBtn.addEventListener('click', () => {
-    rankingOverlay.classList.add('hidden');
-});
+    showRankingBtn.addEventListener('click', () => {
+        rankingOverlay.classList.remove('hidden');
+    });
 
-startButton.addEventListener('click', () => {
-    userNickname = nicknameInput.value.trim() || "Guest";
-    initAudio();
-    startScreen.style.display = 'none';
-    gameStarted = true;
+    closeRankingBtn.addEventListener('click', () => {
+        rankingOverlay.classList.add('hidden');
+    });
+
+    startButton.addEventListener('click', () => {
+        userNickname = nicknameInput.value.trim() || "Guest";
+        initAudio();
+        startScreen.style.display = 'none';
+        gameStarted = true;
+    });
 });
 
 function updateEngineSound() {
