@@ -66,6 +66,75 @@ body {
     color: #ffcc00;
 }
 
+#show-ranking-btn {
+    margin-top: 15px;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    background: rgba(255, 204, 0, 0.8);
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    pointer-events: auto;
+    font-weight: bold;
+}
+
+#ranking-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+#ranking-overlay.hidden {
+    display: none;
+}
+
+#ranking-modal {
+    background: #1a1a1a;
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid #ffcc00;
+    width: 300px;
+    text-align: center;
+    color: white;
+}
+
+#ranking-modal h2 {
+    color: #ffcc00;
+    margin-top: 0;
+}
+
+#modal-leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    text-align: left;
+}
+
+#modal-leaderboard-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+}
+
+#close-ranking-btn {
+    padding: 10px 30px;
+    background: #ffcc00;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
 /* Start Screen Styles */
 #start-screen {
     position: fixed;
