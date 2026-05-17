@@ -398,7 +398,7 @@ let userNickname = "Guest";
 
 // --- Leaderboard System ---
 function saveRecord(nickname, time) {
-    let records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
+    let records = JSON.parse(localStorage.getItem('racing_leaderboard_v2') || '[]');
     
     // Check if user already has a record
     const existingIndex = records.findIndex(r => r.nickname === nickname);
@@ -415,12 +415,12 @@ function saveRecord(nickname, time) {
     
     records.sort((a, b) => a.time - b.time);
     records = records.slice(0, 5); // Keep top 5
-    localStorage.setItem('racing_leaderboard', JSON.stringify(records));
+    localStorage.setItem('racing_leaderboard_v2', JSON.stringify(records));
     displayLeaderboard();
 }
 
 function displayLeaderboard() {
-    const records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
+    const records = JSON.parse(localStorage.getItem('racing_leaderboard_v2') || '[]');
     leaderboardList.innerHTML = '';
     if (records.length === 0) {
         leaderboardList.innerHTML = '<li>기록이 없습니다.</li>';
@@ -590,4 +590,4 @@ function animate() {
     updateEngineSound();
     renderer.render(scene, camera);
 }
-animate();
+animate();();
