@@ -396,41 +396,72 @@ const leaderboardList = document.getElementById('leaderboard-list');
 let gameStarted = false;
 let userNickname = "Guest";
 
-// --- Leaderboard System ---
-function saveRecord(nickname, time) {
-    let records = JSON.parse(localStorage.getItem('racing_leaderboard_v2') || '[]');
-    
-    // Check if user already has a record
-    const existingIndex = records.findIndex(r => r.nickname === nickname);
-    
-    if (existingIndex !== -1) {
-        // Update only if the new time is better (lower)
-        if (time < records[existingIndex].time) {
-            records[existingIndex].time = time;
+// --- Firebase Initialization ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDT0FpXeO5KOw4TZs4gkaA9HTNgu4n-UpI",
+    authDomain: "sheosk-c600c.firebaseapp.com",
+    projectId: "sheosk-c600c",
+    storageBucket: "sheosk-c600c.firebasestorage.app",
+    messagingSenderId: "797411429608",
+    appId: "1:797411429608:web:53fad5a2a414ce9e284d5d",
+    measurementId: "G-2SSFCXFZX7"
+};
+
+// Use Compat version to match index.html scripts
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// --- Global Leaderboard System (Firebase) ---
+async function saveRecord(nickname, time) {
+    try {
+        const leaderboardRef = db.collection('leaderboard');
+        const q = leaderboardRef.where("nickname", "==", nickname);
+        const querySnapshot = await q.get();
+
+        if (!querySnapshot.empty) {
+            // Existing user
+            const doc = querySnapshot.docs[0];
+            if (time < doc.data().time) {
+                await doc.ref.update({ time: time, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            }
+        } else {
+            // New user
+            await leaderboardRef.add({
+                nickname: nickname,
+                time: time,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
-    } else {
-        // Add new record
-        records.push({ nickname, time });
+        displayLeaderboard();
+    } catch (error) {
+        console.error("Error saving record:", error);
     }
-    
-    records.sort((a, b) => a.time - b.time);
-    records = records.slice(0, 5); // Keep top 5
-    localStorage.setItem('racing_leaderboard_v2', JSON.stringify(records));
-    displayLeaderboard();
 }
 
-function displayLeaderboard() {
-    const records = JSON.parse(localStorage.getItem('racing_leaderboard_v2') || '[]');
-    leaderboardList.innerHTML = '';
-    if (records.length === 0) {
-        leaderboardList.innerHTML = '<li>기록이 없습니다.</li>';
-        return;
+async function displayLeaderboard() {
+    try {
+        const querySnapshot = await db.collection('leaderboard')
+            .orderBy("time", "asc")
+            .limit(5)
+            .get();
+            
+        leaderboardList.innerHTML = '';
+        if (querySnapshot.empty) {
+            leaderboardList.innerHTML = '<li>기록이 없습니다.</li>';
+            return;
+        }
+        
+        let index = 1;
+        querySnapshot.forEach((doc) => {
+            const rec = doc.data();
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${index}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
+            leaderboardList.appendChild(li);
+            index++;
+        });
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error);
     }
-    records.forEach((rec, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
-        leaderboardList.appendChild(li);
-    });
 }
 
 // Initial display
