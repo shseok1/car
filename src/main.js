@@ -590,4 +590,4 @@ function animate() {
     updateEngineSound();
     renderer.render(scene, camera);
 }
-animate();();
+animate();
