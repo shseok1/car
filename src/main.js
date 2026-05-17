@@ -391,9 +391,40 @@ function initAudio() {
 
 const startScreen = document.getElementById('start-screen');
 const startButton = document.getElementById('start-button');
+const nicknameInput = document.getElementById('nickname-input');
+const leaderboardList = document.getElementById('leaderboard-list');
 let gameStarted = false;
+let userNickname = "Guest";
+
+// --- Leaderboard System ---
+function saveRecord(nickname, time) {
+    let records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
+    records.push({ nickname, time });
+    records.sort((a, b) => a.time - b.time);
+    records = records.slice(0, 5); // Keep top 5
+    localStorage.setItem('racing_leaderboard', JSON.stringify(records));
+    displayLeaderboard();
+}
+
+function displayLeaderboard() {
+    const records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
+    leaderboardList.innerHTML = '';
+    if (records.length === 0) {
+        leaderboardList.innerHTML = '<li>기록이 없습니다.</li>';
+        return;
+    }
+    records.forEach((rec, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
+        leaderboardList.appendChild(li);
+    });
+}
+
+// Initial display
+displayLeaderboard();
 
 startButton.addEventListener('click', () => {
+    userNickname = nicknameInput.value.trim() || "Guest";
     initAudio();
     startScreen.style.display = 'none';
     gameStarted = true;
@@ -500,6 +531,10 @@ function animate() {
         // Finish line is at angle 0. Detect crossing from halfway.
         if (hasPassedHalfway && Math.abs(carAngle) < 0.1) {
             const finalLapTime = currentTime - lapStartTime;
+            
+            // Update leaderboard if it's a new lap
+            saveRecord(userNickname, finalLapTime);
+
             if (finalLapTime < bestLapTime) {
                 bestLapTime = finalLapTime;
                 bestLapDisplay.textContent = `BEST LAP: ${formatTime(bestLapTime)}`;

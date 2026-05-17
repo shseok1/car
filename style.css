@@ -124,3 +124,48 @@ body {
 #start-button:active {
     transform: scale(0.95);
 }
+
+#nickname-container {
+    margin-bottom: 15px;
+}
+
+#nickname-input {
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    border-radius: 20px;
+    border: 2px solid #ffcc00;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    outline: none;
+    text-align: center;
+}
+
+#leaderboard-container {
+    margin-top: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+    width: 250px;
+}
+
+#leaderboard-container h3 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: #ffcc00;
+}
+
+#leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+#leaderboard-list li {
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+}

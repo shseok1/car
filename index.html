@@ -34,11 +34,21 @@
                 <li><strong>S / ↓</strong> : 감속 / 후진</li>
                 <li><strong>A / ←</strong> : 좌회전</li>
                 <li><strong>D / →</strong> : 우회전</li>
-                <li><strong>C</strong> : 시점 전환 (1인칭/3인칭)</li>
+                <li><strong>C / ㅊ</strong> : 시점 전환</li>
             </ul>
-            <p>※ 시작 버튼을 누르면 엔진 소리가 활성화됩니다.</p>
+        </div>
+        
+        <div id="nickname-container">
+            <input type="text" id="nickname-input" placeholder="닉네임을 입력하세요" maxlength="10">
         </div>
         <button id="start-button">게임 시작</button>
+
+        <div id="leaderboard-container">
+            <h3>🏆 TOP 5 랭킹</h3>
+            <ul id="leaderboard-list">
+                <li>기록이 없습니다.</li>
+            </ul>
+        </div>
     </div>
 
     <!-- Load main script as a regular script (not module) -->
