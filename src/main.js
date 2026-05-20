@@ -396,32 +396,64 @@ const leaderboardList = document.getElementById('leaderboard-list');
 let gameStarted = false;
 let userNickname = "Guest";
 
-// --- Leaderboard System ---
-function saveRecord(nickname, time) {
-    let records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
-    records.push({ nickname, time });
-    records.sort((a, b) => a.time - b.time);
-    records = records.slice(0, 5); // Keep top 5
-    localStorage.setItem('racing_leaderboard', JSON.stringify(records));
-    displayLeaderboard();
-}
+// --- Firebase Initialization ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDT0FpXeO5KOw4TZs4gkaA9HTNgu4n-UpI",
+    authDomain: "sheosk-c600c.firebaseapp.com",
+    projectId: "sheosk-c600c",
+    storageBucket: "sheosk-c600c.firebasestorage.app",
+    messagingSenderId: "797411429608",
+    appId: "1:797411429608:web:53fad5a2a414ce9e284d5d",
+    measurementId: "G-2SSFCXFZX7"
+};
 
-function displayLeaderboard() {
-    const records = JSON.parse(localStorage.getItem('racing_leaderboard') || '[]');
-    leaderboardList.innerHTML = '';
-    if (records.length === 0) {
-        leaderboardList.innerHTML = '<li>기록이 없습니다.</li>';
-        return;
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// --- Global Leaderboard System (Firebase) ---
+async function saveRecord(nickname, time) {
+    try {
+        const leaderboardRef = db.collection('leaderboard');
+        const q = leaderboardRef.where("nickname", "==", nickname);
+        const querySnapshot = await q.get();
+
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            if (time < doc.data().time) {
+                await doc.ref.update({ time: time, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            }
+        } else {
+            await leaderboardRef.add({
+                nickname: nickname,
+                time: time,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    } catch (error) {
+        console.error("Error saving record:", error);
     }
-    records.forEach((rec, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
-        leaderboardList.appendChild(li);
-    });
 }
 
-// Initial display
-displayLeaderboard();
+function initLeaderboardSync() {
+    db.collection('leaderboard')
+        .orderBy("time", "asc")
+        .limit(5)
+        .onSnapshot((querySnapshot) => {
+            leaderboardList.innerHTML = '';
+            if (querySnapshot.empty) {
+                leaderboardList.innerHTML = '<li>기록이 없습니다.</li>';
+            } else {
+                querySnapshot.forEach((doc, index) => {
+                    const rec = doc.data();
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${index + 1}. ${rec.nickname}</span> <span>${formatTime(rec.time)}</span>`;
+                    leaderboardList.appendChild(li);
+                });
+            }
+        });
+}
+
+initLeaderboardSync();
 
 startButton.addEventListener('click', () => {
     userNickname = nicknameInput.value.trim() || "Guest";
