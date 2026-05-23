@@ -70,20 +70,20 @@ trackGeo.computeVertexNormals();
 
 const trackMat = new THREE.MeshPhongMaterial({ color: 0x333333, side: THREE.DoubleSide });
 const track = new THREE.Mesh(trackGeo, trackMat);
-track.position.y = 0.05; 
+track.position.y = 0.05;
 track.receiveShadow = true;
 scene.add(track);
 
 // --- Catch Fence (Outer Barrier) ---
 const fenceGeo = new THREE.CylinderGeometry(outerRadius, outerRadius, 12, 128, 1, true);
-const fenceMat = new THREE.MeshPhongMaterial({ 
-    color: 0xcccccc, 
-    transparent: true, 
-    opacity: 0.5, 
-    side: THREE.DoubleSide 
+const fenceMat = new THREE.MeshPhongMaterial({
+    color: 0xcccccc,
+    transparent: true,
+    opacity: 0.5,
+    side: THREE.DoubleSide
 });
 const fence = new THREE.Mesh(fenceGeo, fenceMat);
-fence.position.y = 14; 
+fence.position.y = 14;
 scene.add(fence);
 
 // Add Top Rail
@@ -101,7 +101,7 @@ const finishLineMat = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE
 const finishLine = new THREE.Mesh(finishLineGeo, finishLineMat);
 
 // Radial line at x=0, z=50 (spanning z=40 to z=60)
-finishLine.position.set(0, 4.05, 50); 
+finishLine.position.set(0, 4.05, 50);
 finishLine.rotation.x = -Math.PI / 2 - slopeAngle;
 scene.add(finishLine);
 
@@ -138,7 +138,7 @@ function createGrandstand(x, z, rotation) {
     const stepWidth = 30;
     const stepHeight = 0.8;
     const stepDepth = 2;
-    
+
     for (let i = 0; i < stepCount; i++) {
         // Seat row
         const stepGeo = new THREE.BoxGeometry(stepWidth, stepHeight, stepDepth);
@@ -148,7 +148,7 @@ function createGrandstand(x, z, rotation) {
         step.castShadow = true;
         step.receiveShadow = true;
         stand.add(step);
-        
+
         // Spectators
         for (let j = 0; j < 15; j++) {
             const personGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.7);
@@ -158,7 +158,7 @@ function createGrandstand(x, z, rotation) {
             stand.add(person);
         }
     }
-    
+
     // Pillars & Roof
     const roofGeo = new THREE.BoxGeometry(stepWidth + 2, 0.3, stepDepth * stepCount + 2);
     const roofMat = new THREE.MeshPhongMaterial({ color: 0xeeeeee });
@@ -181,22 +181,22 @@ function createGrandstand(x, z, rotation) {
 
 function createBillboard(x, z, rotation) {
     const billboard = new THREE.Group();
-    
+
     // Create Canvas for Text
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = 512;
     canvas.height = 256;
-    
+
     // Background
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Border
     ctx.strokeStyle = '#ffcc00';
     ctx.lineWidth = 20;
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
-    
+
     // Text
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 80px Arial';
@@ -204,21 +204,21 @@ function createBillboard(x, z, rotation) {
     ctx.textBaseline = 'middle';
     ctx.shadowColor = '#00ffff';
     ctx.shadowBlur = 15;
-    ctx.fillText('이수현', canvas.width / 2, canvas.height / 2);
-    
+    ctx.fillText('대상혁', canvas.width / 2, canvas.height / 2);
+
     const texture = new THREE.CanvasTexture(canvas);
-    
+
     // Screen Mesh
     const screenGeo = new THREE.PlaneGeometry(20, 10);
-    const screenMat = new THREE.MeshPhongMaterial({ 
+    const screenMat = new THREE.MeshPhongMaterial({
         map: texture,
         emissive: 0x555555,
-        side: THREE.DoubleSide 
+        side: THREE.DoubleSide
     });
     const screen = new THREE.Mesh(screenGeo, screenMat);
     screen.position.y = 15;
     billboard.add(screen);
-    
+
     // Frame
     const frameGeo = new THREE.BoxGeometry(21, 11, 1);
     const frameMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
@@ -226,14 +226,14 @@ function createBillboard(x, z, rotation) {
     frame.position.y = 15;
     frame.position.z = -0.6;
     billboard.add(frame);
-    
+
     // Stand/Pillar
     const standGeo = new THREE.BoxGeometry(2, 10, 2);
     const standMat = new THREE.MeshPhongMaterial({ color: 0x555555 });
     const stand = new THREE.Mesh(standGeo, standMat);
     stand.position.y = 5;
     billboard.add(stand);
-    
+
     billboard.position.set(x, 0, z);
     billboard.rotation.y = rotation;
     scene.add(billboard);
@@ -271,10 +271,10 @@ loader.load(
     'race-future.glb',
     function (gltf) {
         const model = gltf.scene;
-        model.scale.set(1.1, 1, 1.2); 
+        model.scale.set(1.1, 1, 1.2);
         model.rotation.y = 0; // Fix orientation to face forward
         model.position.y = 0.2;
-        
+
         model.traverse(child => {
             if (child.isMesh) {
                 child.material = darkRedMaterial;
@@ -305,16 +305,16 @@ const stats = {
     turnSpeed: 0.04
 };
 
-window.addEventListener('keydown', (e) => { 
+window.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
-    if (keys.hasOwnProperty(e.key)) keys[e.key] = true; 
+    if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
     if (keys.hasOwnProperty(key)) keys[key] = true; // Support case-insensitive (W/A/S/D)
-    
+
     if (key === 'c' || key === 'ㅊ') {
         viewMode = (viewMode + 1) % 2; // Toggle view
     }
 });
-window.addEventListener('keyup', (e) => { 
+window.addEventListener('keyup', (e) => {
     const key = e.key.toLowerCase();
     if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
     if (keys.hasOwnProperty(key)) keys[key] = false;
@@ -332,35 +332,35 @@ const revBar = document.getElementById('rev-bar');
 // --- Gearbox System ---
 const gearbox = {
     currentGear: 1,
-    maxGears: 8, 
+    maxGears: 8,
     rpm: 0,
-    ratios: [0, 0.12, 0.25, 0.38, 0.52, 0.65, 0.78, 0.9, 1.0], 
+    ratios: [0, 0.12, 0.25, 0.38, 0.52, 0.65, 0.78, 0.9, 1.0],
     shiftCooldown: 0,
 };
 
 function updateGearbox() {
     const absVelocity = Math.abs(velocity);
     const speedRatio = absVelocity / stats.maxSpeed;
-    
+
     const gearMin = gearbox.ratios[gearbox.currentGear - 1];
     const gearMax = gearbox.ratios[gearbox.currentGear];
-    
+
     gearbox.rpm = (speedRatio - gearMin) / (gearMax - gearMin || 0.1);
-    gearbox.rpm = Math.max(0, Math.min(1.2, gearbox.rpm)); 
-    
+    gearbox.rpm = Math.max(0, Math.min(1.2, gearbox.rpm));
+
     if (gearbox.shiftCooldown > 0) {
         gearbox.shiftCooldown--;
     } else {
         if (gearbox.rpm > 0.9 && gearbox.currentGear < gearbox.maxGears) {
             gearbox.currentGear++;
-            gearbox.shiftCooldown = 30; 
+            gearbox.shiftCooldown = 30;
         }
         else if (gearbox.rpm < 0.25 && gearbox.currentGear > 1) {
             gearbox.currentGear--;
             gearbox.shiftCooldown = 30;
         }
     }
-    
+
     gearDisplay.textContent = `GEAR: ${gearbox.currentGear}`;
     revBar.style.width = `${Math.min(100, gearbox.rpm * 100)}%`;
 }
@@ -493,11 +493,11 @@ function animate() {
         lapStartTime = performance.now();
         return;
     }
-    
+
     const currentTime = performance.now();
     const lapTime = currentTime - lapStartTime;
     currentLapDisplay.textContent = `LAP TIME: ${formatTime(lapTime)}`;
-    
+
     const isUp = keys.w || keys.ArrowUp;
     const isDown = keys.s || keys.ArrowDown;
     const isLeft = keys.a || keys.ArrowLeft;
@@ -524,11 +524,11 @@ function animate() {
 
     // --- Banked Track Physics & Collision ---
     const dist = Math.sqrt(carGroup.position.x ** 2 + carGroup.position.z ** 2);
-    
+
     // Hard boundary at Catch Fence (Outer) and Inner Grass
     const safeOuter = outerRadius - 1.5;
     const safeInner = innerRadius + 1;
-    
+
     if (dist > safeOuter) {
         const factor = safeOuter / dist;
         carGroup.position.x *= factor;
@@ -547,14 +547,14 @@ function animate() {
         const t = (dist - innerRadius) / (outerRadius - innerRadius);
         const targetY = t * 8 + 0.2; // 8 is the height difference
         carGroup.position.y = targetY;
-        
+
         // Tilt car to match banking
         const slopeAngle = Math.atan2(8, outerRadius - innerRadius);
-        carGroup.rotation.z = -slopeAngle; 
+        carGroup.rotation.z = -slopeAngle;
 
         // --- Lap Detection Logic (Angle-based) ---
         const carAngle = Math.atan2(carGroup.position.x, carGroup.position.z);
-        
+
         // Halfway point is the opposite side (around PI or -PI)
         if (Math.abs(carAngle) > 2.5) {
             hasPassedHalfway = true;
@@ -563,7 +563,7 @@ function animate() {
         // Finish line is at angle 0. Detect crossing from halfway.
         if (hasPassedHalfway && Math.abs(carAngle) < 0.1) {
             const finalLapTime = currentTime - lapStartTime;
-            
+
             // Update leaderboard if it's a new lap
             saveRecord(userNickname, finalLapTime);
 
@@ -590,10 +590,10 @@ function animate() {
         // 1st Person (Cockpit)
         cameraOffset = new THREE.Vector3(0, 2.5, 0.5); // Inside the car
     }
-    
+
     cameraOffset.applyQuaternion(carGroup.quaternion);
     const targetCameraPos = carGroup.position.clone().add(cameraOffset);
-    
+
     if (viewMode === 0) {
         camera.position.lerp(targetCameraPos, 0.1);
         camera.lookAt(carGroup.position);
